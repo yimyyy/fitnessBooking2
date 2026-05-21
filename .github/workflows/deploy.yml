@@ -1,0 +1,184 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Backend Tests
+  # ─────────────────────────────────────────────────────────────────────────────
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fitness_booking_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: server
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+
+      - name: Run Prisma migrations for test DB
+        run: npx prisma migrate deploy
+        working-directory: server
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+
+      - name: Run unit tests
+        run: npm run test:unit
+        working-directory: server
+        env:
+          JWT_SECRET: test-secret
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+          NODE_ENV: test
+
+      - name: Run integration tests
+        run: npm run test:integration
+        working-directory: server
+        env:
+          JWT_SECRET: test-secret
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+          NODE_ENV: test
+
+      - name: Run coverage check
+        run: npm run test:coverage
+        working-directory: server
+        env:
+          JWT_SECRET: test-secret
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_booking_test
+          NODE_ENV: test
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Frontend Tests
+  # ─────────────────────────────────────────────────────────────────────────────
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Run frontend tests
+        run: npm test
+        working-directory: client
+
+      - name: Run coverage check
+        run: npm run test:coverage
+        working-directory: client
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Deploy to AWS (only on push to main)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ─── Build & Deploy Frontend to S3/CloudFront ───────────────────────────
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: client
+        env:
+          VITE_API_URL: ${{ secrets.EB_API_URL }}
+
+      - name: Upload frontend to S3
+        run: |
+          aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET }} \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+          aws s3 cp client/dist/index.html s3://${{ secrets.S3_BUCKET }}/index.html \
+            --cache-control "no-cache,no-store,must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      # ─── Deploy Backend to Elastic Beanstalk ─────────────────────────────────
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Build server
+        run: npm run build
+        working-directory: server
+
+      - name: Install EB CLI
+        run: pip install awsebcli
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          eb init ${{ secrets.EB_APP_NAME }} --region ${{ secrets.AWS_REGION }} --platform "Node.js 18"
+          eb deploy ${{ secrets.EB_ENV_NAME }} --timeout 20
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

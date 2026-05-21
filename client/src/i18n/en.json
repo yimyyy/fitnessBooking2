@@ -1,0 +1,89 @@
+{
+  "nav": {
+    "home": "Home",
+    "classes": "Classes",
+    "bookings": "My Bookings",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "loginSuccess": "Welcome back!",
+    "registerSuccess": "Account created successfully!",
+    "invalidCredentials": "Invalid email or password",
+    "emailInUse": "Email already in use"
+  },
+  "classes": {
+    "title": "Fitness Classes",
+    "noClasses": "No classes available",
+    "book": "Book Now",
+    "joinWaitlist": "Join Waitlist",
+    "cancel": "Cancel Booking",
+    "full": "Class Full",
+    "cancelled": "Cancelled",
+    "instructor": "Instructor",
+    "location": "Location",
+    "duration": "Duration",
+    "capacity": "Capacity",
+    "price": "Price",
+    "spotsLeft": "spots left",
+    "waitlistPosition": "Waitlist position"
+  },
+  "bookings": {
+    "myBookings": "My Bookings",
+    "noBookings": "No bookings yet",
+    "confirmed": "Confirmed",
+    "waitlisted": "Waitlisted",
+    "cancelled": "Cancelled",
+    "paymentPending": "Payment Pending",
+    "paymentPaid": "Paid",
+    "paymentRefunded": "Refunded",
+    "cancelBooking": "Cancel Booking",
+    "cancelConfirm": "Are you sure you want to cancel this booking?"
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "totalBookings": "Total Bookings",
+    "totalRevenue": "Total Revenue",
+    "totalClasses": "Total Classes",
+    "createClass": "Create Class",
+    "editClass": "Edit Class",
+    "deleteClass": "Delete Class",
+    "deleteConfirm": "Are you sure you want to delete this class?",
+    "users": "Users",
+    "payments": "Payments",
+    "updatePayment": "Update Payment",
+    "promote": "Promote from Waitlist"
+  },
+  "form": {
+    "title": "Title",
+    "description": "Description",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "capacity": "Capacity",
+    "price": "Price ($)",
+    "location": "Location",
+    "instructor": "Instructor",
+    "save": "Save",
+    "cancel": "Cancel",
+    "required": "This field is required",
+    "invalidDate": "Invalid date"
+  },
+  "errors": {
+    "notFound": "Not found",
+    "serverError": "Server error. Please try again.",
+    "unauthorized": "Please log in to continue",
+    "forbidden": "You don't have permission to do that"
+  },
+  "language": {
+    "toggle": "FR",
+    "en": "English",
+    "fr": "French"
+  }
+}

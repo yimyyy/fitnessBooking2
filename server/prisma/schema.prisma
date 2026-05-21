@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  instructor
+  student
+}
+
+enum BookingStatus {
+  confirmed
+  waitlisted
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  refunded
+}
+
+enum ClassStatus {
+  upcoming
+  full
+  cancelled
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(student)
+  language     String    @default("en")
+  createdAt    DateTime  @default(now())
+  bookings     Booking[]
+  notifications Notification[]
+  taughtClasses Class[]  @relation("InstructorClasses")
+}
+
+model Class {
+  id              String      @id @default(cuid())
+  title           String
+  description     String?
+  instructorId    String
+  instructor      User        @relation("InstructorClasses", fields: [instructorId], references: [id])
+  startTime       DateTime
+  endTime         DateTime
+  capacity        Int
+  price           Float
+  location        String
+  isRecurring     Boolean     @default(false)
+  recurrenceRule  String?
+  parentClassId   String?
+  status          ClassStatus @default(upcoming)
+  createdAt       DateTime    @default(now())
+  bookings        Booking[]
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  classId        String
+  class          Class         @relation(fields: [classId], references: [id])
+  status         BookingStatus @default(confirmed)
+  paymentStatus  PaymentStatus @default(pending)
+  paymentAmount  Float?
+  paymentRef     String?
+  bookedAt       DateTime      @default(now())
+  cancelledAt    DateTime?
+}
+
+model Notification {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id])
+  type    String
+  sentAt  DateTime @default(now())
+  meta    Json?
+}

@@ -1,0 +1,89 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "classes": "Cours",
+    "bookings": "Mes Réservations",
+    "admin": "Administration",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "S'inscrire"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "name": "Nom complet",
+    "loginSuccess": "Bienvenue!",
+    "registerSuccess": "Compte créé avec succès!",
+    "invalidCredentials": "Email ou mot de passe invalide",
+    "emailInUse": "Email déjà utilisé"
+  },
+  "classes": {
+    "title": "Cours de Fitness",
+    "noClasses": "Aucun cours disponible",
+    "book": "Réserver",
+    "joinWaitlist": "Liste d'attente",
+    "cancel": "Annuler la Réservation",
+    "full": "Cours Complet",
+    "cancelled": "Annulé",
+    "instructor": "Instructeur",
+    "location": "Lieu",
+    "duration": "Durée",
+    "capacity": "Capacité",
+    "price": "Prix",
+    "spotsLeft": "places restantes",
+    "waitlistPosition": "Position liste d'attente"
+  },
+  "bookings": {
+    "myBookings": "Mes Réservations",
+    "noBookings": "Aucune réservation",
+    "confirmed": "Confirmée",
+    "waitlisted": "Liste d'attente",
+    "cancelled": "Annulée",
+    "paymentPending": "Paiement en attente",
+    "paymentPaid": "Payé",
+    "paymentRefunded": "Remboursé",
+    "cancelBooking": "Annuler la Réservation",
+    "cancelConfirm": "Êtes-vous sûr de vouloir annuler cette réservation?"
+  },
+  "admin": {
+    "dashboard": "Tableau de Bord",
+    "totalBookings": "Réservations Totales",
+    "totalRevenue": "Revenus Totaux",
+    "totalClasses": "Cours Totaux",
+    "createClass": "Créer un Cours",
+    "editClass": "Modifier le Cours",
+    "deleteClass": "Supprimer le Cours",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce cours?",
+    "users": "Utilisateurs",
+    "payments": "Paiements",
+    "updatePayment": "Mettre à jour le Paiement",
+    "promote": "Promouvoir de la Liste d'attente"
+  },
+  "form": {
+    "title": "Titre",
+    "description": "Description",
+    "startTime": "Heure de début",
+    "endTime": "Heure de fin",
+    "capacity": "Capacité",
+    "price": "Prix ($)",
+    "location": "Lieu",
+    "instructor": "Instructeur",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "required": "Ce champ est requis",
+    "invalidDate": "Date invalide"
+  },
+  "errors": {
+    "notFound": "Non trouvé",
+    "serverError": "Erreur serveur. Veuillez réessayer.",
+    "unauthorized": "Veuillez vous connecter pour continuer",
+    "forbidden": "Vous n'avez pas la permission de faire cela"
+  },
+  "language": {
+    "toggle": "EN",
+    "en": "Anglais",
+    "fr": "Français"
+  }
+}
