@@ -10,7 +10,7 @@ export function BookingsPage() {
   const { t } = useLanguage();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { cancel, isLoading: isCancelling } = useBooking();
+  const { cancel, isLoading: isCancelling, error: cancelError, setError: setCancelError } = useBooking();
 
   useEffect(() => {
     bookingsApi.getMyBookings().then(res => {
@@ -20,6 +20,7 @@ export function BookingsPage() {
 
   const handleCancel = async (booking: Booking) => {
     if (!confirm(t.bookings.cancelConfirm)) return;
+    setCancelError(null);
     const ok = await cancel(booking.id);
     if (ok) setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'cancelled' } : b));
   };
@@ -29,6 +30,11 @@ export function BookingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">{t.bookings.myBookings}</h1>
+      {cancelError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          {cancelError}
+        </div>
+      )}
       {bookings.length === 0 ? (
         <p className="text-gray-500 text-center">{t.bookings.noBookings}</p>
       ) : (

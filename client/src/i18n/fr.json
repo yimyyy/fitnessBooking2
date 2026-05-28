@@ -45,7 +45,8 @@
     "paymentPaid": "Payé",
     "paymentRefunded": "Remboursé",
     "cancelBooking": "Annuler la Réservation",
-    "cancelConfirm": "Êtes-vous sûr de vouloir annuler cette réservation?"
+    "cancelConfirm": "Êtes-vous sûr de vouloir annuler cette réservation?",
+    "cancelError": "Impossible d'annuler la réservation"
   },
   "admin": {
     "dashboard": "Tableau de Bord",
@@ -59,7 +60,11 @@
     "users": "Utilisateurs",
     "payments": "Paiements",
     "updatePayment": "Mettre à jour le Paiement",
-    "promote": "Promouvoir de la Liste d'attente"
+    "promote": "Promouvoir de la Liste d'attente",
+    "settings": "Paramètres",
+    "cancellationWindow": "Fenêtre d'annulation (heures)",
+    "cancellationWindowHelp": "Les étudiants ne peuvent pas annuler une réservation dans ce délai avant le début du cours.",
+    "settingsSaved": "Paramètres enregistrés"
   },
   "form": {
     "title": "Titre",

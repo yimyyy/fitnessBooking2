@@ -11,6 +11,7 @@ jest.mock('../../prisma/client', () => ({
       findMany: jest.fn(), update: jest.fn(), findUnique: jest.fn(),
     },
     notification: { create: jest.fn() },
+    appSettings: { findUnique: jest.fn().mockResolvedValue(null), findMany: jest.fn().mockResolvedValue([]), upsert: jest.fn() },
   },
 }));
 

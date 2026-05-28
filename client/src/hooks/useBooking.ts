@@ -39,5 +39,5 @@ export function useBooking() {
     }
   };
 
-  return { book, cancel, isLoading, error };
+  return { book, cancel, isLoading, error, setError };
 }

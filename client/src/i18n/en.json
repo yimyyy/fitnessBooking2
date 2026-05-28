@@ -45,7 +45,8 @@
     "paymentPaid": "Paid",
     "paymentRefunded": "Refunded",
     "cancelBooking": "Cancel Booking",
-    "cancelConfirm": "Are you sure you want to cancel this booking?"
+    "cancelConfirm": "Are you sure you want to cancel this booking?",
+    "cancelError": "Could not cancel booking"
   },
   "admin": {
     "dashboard": "Admin Dashboard",
@@ -59,7 +60,11 @@
     "users": "Users",
     "payments": "Payments",
     "updatePayment": "Update Payment",
-    "promote": "Promote from Waitlist"
+    "promote": "Promote from Waitlist",
+    "settings": "Settings",
+    "cancellationWindow": "Cancellation Window (hours)",
+    "cancellationWindowHelp": "Students cannot cancel a booking within this many hours of the class start time.",
+    "settingsSaved": "Settings saved"
   },
   "form": {
     "title": "Title",

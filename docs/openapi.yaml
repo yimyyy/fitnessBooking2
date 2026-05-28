@@ -414,3 +414,58 @@ paths:
       responses:
         '200':
           description: Booking promoted to confirmed
+
+  /admin/settings:
+    get:
+      summary: Get all app settings (admin only)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    type: object
+                    properties:
+                      cancellationWindowHours:
+                        type: string
+                        example: "24"
+                        description: Hours before class start that cancellation is allowed
+
+    put:
+      summary: Update an app setting (admin only)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, value]
+              properties:
+                key:
+                  type: string
+                  example: cancellationWindowHours
+                value:
+                  type: string
+                  example: "48"
+      responses:
+        '200':
+          description: Setting updated, returns all current settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    type: object
+                    additionalProperties: { type: string }
+        '400':
+          description: Invalid input
+        '403':
+          description: Forbidden (admin only)

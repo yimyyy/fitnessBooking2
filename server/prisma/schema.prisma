@@ -85,3 +85,8 @@ model Notification {
   sentAt  DateTime @default(now())
   meta    Json?
 }
+
+model AppSettings {
+  key   String @id
+  value String
+}

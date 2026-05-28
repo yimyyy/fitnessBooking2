@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { createBooking, cancelBooking, getUserBookings } from '../services/bookingService';
+import { getSetting } from '../services/settingsService';
 
 export const bookingsRouter = Router();
 
@@ -25,7 +26,7 @@ bookingsRouter.post('/', authenticate, async (req: AuthRequest, res, next) => {
 
 bookingsRouter.delete('/:id', authenticate, async (req: AuthRequest, res, next) => {
   try {
-    const windowHours = parseInt(process.env.CANCELLATION_WINDOW_HOURS || '24', 10);
+    const windowHours = parseInt(await getSetting('cancellationWindowHours'), 10);
     await cancelBooking(String(req.params.id), req.user!.id, windowHours);
     res.status(204).send();
   } catch (err) {

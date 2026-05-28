@@ -9,6 +9,7 @@ jest.mock('../prisma/client', () => ({
       findMany: jest.fn(), update: jest.fn(), findUnique: jest.fn(),
     },
     notification: { create: jest.fn() },
+    appSettings: { findUnique: jest.fn(), findMany: jest.fn(), upsert: jest.fn() },
     $disconnect: jest.fn(),
   },
 }));

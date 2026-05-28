@@ -4,6 +4,7 @@ import { classesApi } from '../api/classes';
 import type { FitnessClass, CreateClassData } from '../api/classes';
 import { AdminClassForm } from '../components/AdminClassForm';
 import { apiClient } from '../api/client';
+import { adminApi } from '../api/admin';
 
 export function AdminPage() {
   const { t } = useLanguage();
@@ -12,13 +13,16 @@ export function AdminPage() {
   const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<FitnessClass | null>(null);
+  const [cancellationWindow, setCancellationWindow] = useState('24');
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   useEffect(() => {
     Promise.all([
       apiClient.get('/admin/stats'),
       classesApi.getAll(),
       apiClient.get('/admin/users'),
-    ]).then(([statsRes, classesRes, usersRes]) => {
+      adminApi.getSettings(),
+    ]).then(([statsRes, classesRes, usersRes, settingsRes]) => {
       setStats(statsRes.data);
       setClasses(classesRes.data.classes);
       setInstructors(
@@ -26,8 +30,16 @@ export function AdminPage() {
           .filter((u) => u.role === 'instructor' || u.role === 'admin')
           .map((u) => ({ id: u.id, name: u.name }))
       );
+      setCancellationWindow(settingsRes.data.settings.cancellationWindowHours ?? '24');
     }).catch(console.error);
   }, []);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await adminApi.updateSetting('cancellationWindowHours', cancellationWindow);
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 3000);
+  };
 
   const handleCreate = async (data: CreateClassData) => {
     const res = await classesApi.create(data);
@@ -64,6 +76,32 @@ export function AdminPage() {
             <div className="text-sm text-gray-500 mt-1">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Settings */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4">{t.admin.settings}</h2>
+        <form onSubmit={handleSaveSettings} className="flex items-end gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t.admin.cancellationWindow}
+            </label>
+            <p className="text-xs text-gray-500 mb-2">{t.admin.cancellationWindowHelp}</p>
+            <input
+              type="number"
+              min="0"
+              value={cancellationWindow}
+              onChange={e => setCancellationWindow(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+            {t.form.save}
+          </button>
+          {settingsSaved && (
+            <span className="text-sm text-green-600">{t.admin.settingsSaved}</span>
+          )}
+        </form>
       </div>
 
       {/* Classes */}

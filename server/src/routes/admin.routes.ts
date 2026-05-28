@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { authenticate, requireRole } from '../middleware/auth';
 import { prisma } from '../prisma/client';
+import { getAllSettings, setSetting } from '../services/settingsService';
 
 export const adminRouter = Router();
 
@@ -68,6 +70,31 @@ adminRouter.get('/stats', async (_req, res, next) => {
       totalRevenue: totalRevenue._sum.paymentAmount || 0,
       classCount,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get all app settings
+adminRouter.get('/settings', async (_req, res, next) => {
+  try {
+    const settings = await getAllSettings();
+    res.json({ settings });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update an app setting
+adminRouter.put('/settings', async (req, res, next) => {
+  try {
+    const { key, value } = z.object({
+      key: z.string().min(1),
+      value: z.string(),
+    }).parse(req.body);
+    await setSetting(key, value);
+    const settings = await getAllSettings();
+    res.json({ settings });
   } catch (err) {
     next(err);
   }
