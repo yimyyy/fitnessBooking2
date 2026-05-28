@@ -30,7 +30,7 @@ async function main() {
 
   // Create classes
   const now = new Date();
-  const tomorrow = new Date(now.getTime() + 24 * 3600000);
+  const tomorrow = new Date(now.getTime() + 72 * 3600000);
   const nextWeek = new Date(now.getTime() + 7 * 24 * 3600000);
 
   const yogaClass = await prisma.class.upsert({
