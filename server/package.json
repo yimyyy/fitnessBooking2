@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --exec 'ts-node src/index.ts' --watch src --ext ts",
+    "dev": "tsx watch src/index.ts",
     "test": "jest",
     "test:unit": "jest --testPathPatterns=unit",
     "test:integration": "jest --testPathPatterns=integration",
@@ -54,6 +54,7 @@
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   }
 }
