@@ -84,6 +84,29 @@ describe('Classes routes', () => {
         .send(classData);
       expect(res.status).toBe(403);
     });
+
+    it('accepts recurrenceEndDate and passes it to the service', async () => {
+      (mockPrisma.class.create as jest.Mock).mockResolvedValue(mockClass);
+      const endDate = '2027-12-31T00:00:00Z';
+      const res = await request(app)
+        .post('/api/v1/classes')
+        .set('Authorization', `Bearer ${makeToken('admin')}`)
+        .send({ ...classData, isRecurring: true, recurrenceRule: 'MO,WE', recurrenceEndDate: endDate });
+      expect(res.status).toBe(201);
+      expect(mockPrisma.class.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ recurrenceEndDate: new Date(endDate) }),
+        })
+      );
+    });
+
+    it('returns 400 when recurrenceEndDate is not a valid datetime', async () => {
+      const res = await request(app)
+        .post('/api/v1/classes')
+        .set('Authorization', `Bearer ${makeToken('admin')}`)
+        .send({ ...classData, recurrenceEndDate: 'not-a-date' });
+      expect(res.status).toBe(400);
+    });
   });
 
   describe('DELETE /api/v1/classes/:id', () => {

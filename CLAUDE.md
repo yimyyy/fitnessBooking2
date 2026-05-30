@@ -29,7 +29,7 @@
 ## Classes
 - `GET /api/v1/classes` — public; returns upcoming classes (startTime ≥ now) by default; `?view=past` returns past classes ordered newest first
 - `GET /api/v1/classes/:id` — public, returns a single class with bookings
-- `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional), recurrenceRule (optional), parentClassId (optional)
+- `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional), recurrenceRule (optional), recurrenceEndDate (optional ISO datetime), parentClassId (optional)
 - `PUT /api/v1/classes/:id` — admin or instructor only; any subset of the above fields
 - `DELETE /api/v1/classes/:id` — admin only
 - Class status is one of: `upcoming`, `full`, `cancelled`
@@ -85,7 +85,8 @@ All admin routes require admin role.
 
 **Classes (`/classes`)**
 - Toggle between Upcoming and Past Classes views
-- Upcoming view: card or calendar layout (toggle between the two); authenticated users see Book / Join Waitlist / Cancel Booking button per class
+- Upcoming view: card or calendar layout (toggle between the two); authenticated non-admin users see Book / Join Waitlist / Cancel Booking button per class
+- Admin users see the class list but no booking buttons (they book via the admin panel)
 - Past Classes view: list only; no booking buttons shown
 - Each class card shows: title, instructor, date/time, location, price, capacity/spots left, status badge
 - Unauthenticated users see the class list but cannot book
@@ -104,7 +105,11 @@ All admin routes require admin role.
   - Admin can update payment status per booking (pending/paid/refunded)
   - Admins themselves do not have a "Manage Bookings" button
 - Classes table: title, date, capacity used, status; Edit and Delete buttons
-- Inline create/edit form for classes (with instructor selector populated from admin/instructor users)
+- Inline create/edit form for classes (with instructor selector populated from admin/instructor users):
+  - Start time: date picker + 30-minute time select (for picker; custom `<input type="time">` also shown for free entry)
+  - Duration in minutes (endTime is computed as startTime + duration before submitting)
+  - Recurring checkbox; when checked shows day-of-week pills and an optional end date (date only)
+  - API errors are displayed in a red banner above the form
 
 **Login (`/login`)** — email + password; redirects to home on success
 
@@ -127,8 +132,13 @@ All admin routes require admin role.
 
 ## Tests
 - **Server** (Jest + Supertest, all mocked — no real DB needed):
-  - Integration: auth routes, classes routes, bookings routes
+  - Integration: auth routes, classes routes (including recurrenceEndDate), bookings routes, admin routes
   - Unit: authService, bookingService, sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard, BookingButton, AdminClassForm, CalendarView, LanguageToggle, PaymentBadge
+  - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility), CalendarView, LanguageToggle, PaymentBadge
   - Hooks: useAuth, useClasses, useBooking
+- **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
+  - `auth.cy.ts` — login, register, protected route redirects
+  - `classes.cy.ts` — class list, book, waitlist, past/upcoming toggle
+  - `admin.cy.ts` — class creation with ISO datetime format assertion, duration→endTime computation, error banner, edit pre-fill
+  - Run: `cd client && npm run cy:open` (interactive) or `npm run cy:run` (headless)
