@@ -5,6 +5,7 @@ import { prisma } from '../prisma/client';
 import { getAllSettings, setSetting } from '../services/settingsService';
 import { createBooking } from '../services/bookingService';
 import { ForbiddenError } from '../errors/AppError';
+import { getLogs } from '../services/logService';
 
 export const adminRouter = Router();
 
@@ -146,4 +147,8 @@ adminRouter.patch('/bookings/:id/promote', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+adminRouter.get('/logs', (_req, res) => {
+  res.json({ logs: getLogs() });
 });

@@ -33,4 +33,15 @@ export const adminApi = {
 
   updatePayment: (bookingId: string, paymentStatus: string) =>
     apiClient.patch<{ booking: AdminBooking }>(`/admin/bookings/${bookingId}/payment`, { paymentStatus }),
+
+  getLogs: () =>
+    apiClient.get<{ logs: LogEntry[] }>('/admin/logs'),
 };
+
+export interface LogEntry {
+  id: string;
+  timestamp: string;
+  type: 'email' | 'error';
+  message: string;
+  details?: string;
+}

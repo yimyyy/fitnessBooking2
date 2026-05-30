@@ -21,7 +21,7 @@ const mockClass = {
   id: 'class-1', title: 'Yoga', description: 'Morning yoga',
   instructorId: 'instr-1', startTime: new Date(), endTime: new Date(),
   capacity: 10, price: 20, location: 'Room A',
-  isRecurring: false, recurrenceRule: null, parentClassId: null,
+  isRecurring: false, recurrenceRule: null, recurrenceEndDate: null, parentClassId: null,
   status: 'upcoming' as const, createdAt: new Date(),
 };
 

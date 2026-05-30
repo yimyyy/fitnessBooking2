@@ -1,5 +1,6 @@
 import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
 import { User, Class } from '@prisma/client';
+import { pushLog } from './logService';
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -33,10 +34,12 @@ async function send(params: SendEmailCommandInput): Promise<void> {
 
   if (process.env.NODE_ENV !== 'production') {
     devLog(to, subject, html);
+    pushLog('email', `[dev] ${subject}`, `To: ${to}`);
     return;
   }
 
   await sesClient.send(new SendEmailCommand(params));
+  pushLog('email', subject, `To: ${to}`);
 }
 
 export async function sendBookingConfirmation(user: User, fitnessClass: Class & { instructor?: User }) {

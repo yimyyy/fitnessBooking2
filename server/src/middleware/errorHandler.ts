@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/AppError';
 import { ZodError } from 'zod';
+import { pushLog } from '../services/logService';
 
 export function errorHandler(
   err: Error,
@@ -26,6 +27,7 @@ export function errorHandler(
   }
 
   console.error('Unexpected error:', err);
+  pushLog('error', err.message || 'Unknown error', err.stack);
   res.status(500).json({
     error: 'INTERNAL_SERVER_ERROR',
     message: 'An unexpected error occurred',
