@@ -57,6 +57,8 @@ export function AdminPage() {
   // ── logs state ────────────────────────────────────────────────────────────
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [logFilter, setLogFilter] = useState<'all' | 'email' | 'error'>('all');
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   // ── initial load ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -453,49 +455,93 @@ export function AdminPage() {
     </div>
   );
 
-  const renderLogs = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">Logs</h2>
-        <button onClick={fetchLogs} disabled={logsLoading} className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
-          {logsLoading ? 'Loading…' : 'Refresh'}
-        </button>
-      </div>
-
-      {logs.length === 0 && !logsLoading ? (
-        <p className="text-gray-500 text-sm">No logs yet.</p>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left px-4 py-3 text-gray-600 w-44">Time</th>
-                <th className="text-left px-4 py-3 text-gray-600 w-20">Type</th>
-                <th className="text-left px-4 py-3 text-gray-600">Message</th>
-                <th className="text-left px-4 py-3 text-gray-600">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map(log => (
-                <tr key={log.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2 text-gray-400 text-xs whitespace-nowrap">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      log.type === 'email' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-                    }`}>{log.type}</span>
-                  </td>
-                  <td className="px-4 py-2 text-gray-800">{log.message}</td>
-                  <td className="px-4 py-2 text-gray-500 text-xs font-mono break-all max-w-xs">{log.details ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  const renderLogs = () => {
+    const filtered = logFilter === 'all' ? logs : logs.filter(l => l.type === logFilter);
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Logs</h2>
+          <button onClick={fetchLogs} disabled={logsLoading} className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
+            {logsLoading ? 'Loading…' : 'Refresh'}
+          </button>
         </div>
-      )}
-    </div>
-  );
+
+        <div className="flex gap-2">
+          {(['all', 'email', 'error'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setLogFilter(f)}
+              className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                logFilter === f
+                  ? f === 'error' ? 'bg-red-600 text-white border-red-600'
+                    : f === 'email' ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-gray-800 text-white border-gray-800'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f !== 'all' && (
+                <span className="ml-1.5 text-xs opacity-75">
+                  {logs.filter(l => l.type === f).length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {filtered.length === 0 && !logsLoading ? (
+          <p className="text-gray-500 text-sm">No logs yet.</p>
+        ) : (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-gray-600 w-44">Time</th>
+                  <th className="text-left px-4 py-3 text-gray-600 w-20">Type</th>
+                  <th className="text-left px-4 py-3 text-gray-600">Message</th>
+                  <th className="px-4 py-3 w-20"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(log => (
+                  <React.Fragment key={log.id}>
+                    <tr className="border-t hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-400 text-xs whitespace-nowrap">
+                        {new Date(log.timestamp).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          log.type === 'email' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
+                        }`}>{log.type}</span>
+                      </td>
+                      <td className="px-4 py-2 text-gray-800">{log.message}</td>
+                      <td className="px-4 py-2 text-right">
+                        {log.details && (
+                          <button
+                            onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            {expandedLogId === log.id ? 'Hide' : 'Details'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    {expandedLogId === log.id && log.details && (
+                      <tr className="border-t bg-gray-50">
+                        <td colSpan={4} className="px-4 py-3">
+                          <pre className="text-xs text-gray-600 font-mono whitespace-pre-wrap break-all">{log.details}</pre>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
