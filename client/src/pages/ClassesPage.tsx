@@ -105,8 +105,8 @@ export function ClassesPage() {
                 key={cls.id}
                 fitnessClass={cls}
                 userBookingStatus={classView === 'upcoming' ? userBookings[cls.id]?.status : undefined}
-                onBook={classView === 'upcoming' ? () => handleBook(cls.id) : undefined}
-                onCancel={classView === 'upcoming' ? () => handleCancel(cls.id) : undefined}
+                onBook={classView === 'upcoming' && user?.role !== 'admin' ? () => handleBook(cls.id) : undefined}
+                onCancel={classView === 'upcoming' && user?.role !== 'admin' ? () => handleCancel(cls.id) : undefined}
                 isBookingLoading={isBookingLoading}
               />
             ))
