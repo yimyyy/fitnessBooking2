@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate, requireRole } from '../middleware/auth';
+import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
 import { prisma } from '../prisma/client';
 import { getAllSettings, setSetting } from '../services/settingsService';
+import { createBooking } from '../services/bookingService';
+import { ForbiddenError } from '../errors/AppError';
 
 export const adminRouter = Router();
 
@@ -95,6 +97,39 @@ adminRouter.put('/settings', async (req, res, next) => {
     await setSetting(key, value);
     const settings = await getAllSettings();
     res.json({ settings });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get all bookings for a specific user
+adminRouter.get('/users/:userId/bookings', async (req, res, next) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      where: { userId: String(req.params.userId) },
+      include: {
+        class: { include: { instructor: { select: { id: true, name: true } } } },
+      },
+      orderBy: { bookedAt: 'desc' },
+    });
+    res.json({ bookings });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Book a class on behalf of a user (admin cannot book for themselves)
+adminRouter.post('/bookings', async (req: AuthRequest, res, next) => {
+  try {
+    const { userId, classId } = z.object({
+      userId: z.string().min(1),
+      classId: z.string().min(1),
+    }).parse(req.body);
+    if (userId === req.user!.id) {
+      return next(new ForbiddenError('Admins cannot book classes for themselves.'));
+    }
+    const booking = await createBooking(userId, classId);
+    res.status(201).json({ booking });
   } catch (err) {
     next(err);
   }

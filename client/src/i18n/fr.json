@@ -64,7 +64,14 @@
     "settings": "Paramètres",
     "cancellationWindow": "Fenêtre d'annulation (heures)",
     "cancellationWindowHelp": "Les étudiants ne peuvent pas annuler une réservation dans ce délai avant le début du cours.",
-    "settingsSaved": "Paramètres enregistrés"
+    "settingsSaved": "Paramètres enregistrés",
+    "manageBookings": "Gérer les Réservations",
+    "hideBookings": "Masquer",
+    "bookForUser": "Réserver un Cours pour l'Utilisateur",
+    "selectClass": "Sélectionner un cours...",
+    "noBookings": "Aucune réservation",
+    "bookingCreated": "Réservation créée",
+    "paymentUpdated": "Paiement mis à jour"
   },
   "form": {
     "title": "Titre",

@@ -37,6 +37,7 @@
 
 ## Bookings
 - `POST /api/v1/bookings` — authenticated; body: `{ classId }`
+  - Admin role is blocked (403) — admins use the admin panel to book on behalf of users
   - If confirmed bookings < capacity → booking is `confirmed`
   - If confirmed bookings ≥ capacity → booking is `waitlisted`
   - Cannot book a cancelled class
@@ -59,6 +60,8 @@ All admin routes require admin role.
 - `GET /api/v1/admin/classes/:classId/bookings` — returns all bookings for a class with user and class details
 - `PATCH /api/v1/admin/bookings/:id/payment` — updates `paymentStatus` and `paymentRef` on a booking
 - `PATCH /api/v1/admin/bookings/:id/promote` — manually promotes a waitlisted booking to `confirmed`
+- `POST /api/v1/admin/bookings` — body: `{ userId, classId }`; books a class on behalf of any user; admin cannot book for themselves (403)
+- `GET /api/v1/admin/users/:userId/bookings` — returns all bookings for a specific user with class and instructor details
 - `GET /api/v1/admin/settings` — returns all app settings
 - `PUT /api/v1/admin/settings` — updates a single setting by `{ key, value }`; currently supported key: `cancellationWindowHours`
 
@@ -93,6 +96,11 @@ All admin routes require admin role.
 **Admin (`/admin`)**
 - Dashboard stats: total confirmed bookings, total paid revenue, total classes
 - Settings section: configurable cancellation window (hours) with save confirmation
+- Users table: name, email, role, booking count; "Manage Bookings" expands inline per user
+  - Expanded user row shows all their bookings (class, date, status, payment)
+  - Admin can book a class on behalf of the user (class selector + submit)
+  - Admin can update payment status per booking (pending/paid/refunded)
+  - Admins themselves do not have a "Manage Bookings" button
 - Classes table: title, date, capacity used, status; Edit and Delete buttons
 - Inline create/edit form for classes (with instructor selector populated from admin/instructor users)
 

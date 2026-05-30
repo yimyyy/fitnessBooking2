@@ -5,16 +5,34 @@ import type { FitnessClass, CreateClassData } from '../api/classes';
 import { AdminClassForm } from '../components/AdminClassForm';
 import { apiClient } from '../api/client';
 import { adminApi } from '../api/admin';
+import type { AdminBooking } from '../api/admin';
+
+interface UserRow {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  _count: { bookings: number };
+}
 
 export function AdminPage() {
   const { t } = useLanguage();
   const [stats, setStats] = useState({ totalBookings: 0, totalRevenue: 0, classCount: 0 });
   const [classes, setClasses] = useState<FitnessClass[]>([]);
   const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<FitnessClass | null>(null);
   const [cancellationWindow, setCancellationWindow] = useState('24');
   const [settingsSaved, setSettingsSaved] = useState(false);
+
+  // Per-user booking management state
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [userBookings, setUserBookings] = useState<Record<string, AdminBooking[]>>({});
+  const [bookingClassId, setBookingClassId] = useState<Record<string, string>>({});
+  const [bookingFeedback, setBookingFeedback] = useState<Record<string, string>>({});
+  const [paymentValues, setPaymentValues] = useState<Record<string, string>>({});
+  const [paymentFeedback, setPaymentFeedback] = useState<Record<string, string>>({});
 
   useEffect(() => {
     Promise.all([
@@ -25,8 +43,10 @@ export function AdminPage() {
     ]).then(([statsRes, classesRes, usersRes, settingsRes]) => {
       setStats(statsRes.data);
       setClasses(classesRes.data.classes);
+      const allUsers = usersRes.data.users as UserRow[];
+      setUsers(allUsers);
       setInstructors(
-        (usersRes.data.users as { id: string; name: string; role: string }[])
+        allUsers
           .filter((u) => u.role === 'instructor' || u.role === 'admin')
           .map((u) => ({ id: u.id, name: u.name }))
       );
@@ -58,6 +78,54 @@ export function AdminPage() {
     if (!confirm(t.admin.deleteConfirm)) return;
     await classesApi.delete(id);
     setClasses(prev => prev.filter(c => c.id !== id));
+  };
+
+  const handleToggleUser = async (userId: string) => {
+    if (expandedUserId === userId) {
+      setExpandedUserId(null);
+      return;
+    }
+    setExpandedUserId(userId);
+    if (!userBookings[userId]) {
+      try {
+        const res = await adminApi.getUserBookings(userId);
+        setUserBookings(prev => ({ ...prev, [userId]: res.data.bookings }));
+        const payInit: Record<string, string> = {};
+        res.data.bookings.forEach(b => { payInit[b.id] = b.paymentStatus; });
+        setPaymentValues(prev => ({ ...prev, ...payInit }));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handleBookForUser = async (userId: string) => {
+    const classId = bookingClassId[userId];
+    if (!classId) return;
+    try {
+      await adminApi.bookForUser(userId, classId);
+      setBookingFeedback(prev => ({ ...prev, [userId]: t.admin.bookingCreated }));
+      setTimeout(() => setBookingFeedback(prev => ({ ...prev, [userId]: '' })), 3000);
+      // Refresh bookings for this user
+      const res = await adminApi.getUserBookings(userId);
+      setUserBookings(prev => ({ ...prev, [userId]: res.data.bookings }));
+      setBookingClassId(prev => ({ ...prev, [userId]: '' }));
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error';
+      setBookingFeedback(prev => ({ ...prev, [userId]: msg }));
+    }
+  };
+
+  const handleUpdatePayment = async (bookingId: string, userId: string) => {
+    const status = paymentValues[bookingId];
+    if (!status) return;
+    try {
+      await adminApi.updatePayment(bookingId, status);
+      setPaymentFeedback(prev => ({ ...prev, [bookingId]: t.admin.paymentUpdated }));
+      setTimeout(() => setPaymentFeedback(prev => ({ ...prev, [bookingId]: '' })), 3000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -102,6 +170,143 @@ export function AdminPage() {
             <span className="text-sm text-green-600">{t.admin.settingsSaved}</span>
           )}
         </form>
+      </div>
+
+      {/* Users */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4">{t.admin.users}</h2>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-gray-600">Name</th>
+                <th className="text-left px-4 py-3 text-gray-600">Email</th>
+                <th className="text-left px-4 py-3 text-gray-600">Role</th>
+                <th className="text-left px-4 py-3 text-gray-600">Bookings</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <React.Fragment key={user.id}>
+                  <tr className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{user.name}</td>
+                    <td className="px-4 py-3 text-gray-500">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                        user.role === 'instructor' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>{user.role}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{user._count.bookings}</td>
+                    <td className="px-4 py-3 text-right">
+                      {user.role !== 'admin' && (
+                        <button
+                          onClick={() => handleToggleUser(user.id)}
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          {expandedUserId === user.id ? t.admin.hideBookings : t.admin.manageBookings}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+
+                  {expandedUserId === user.id && (
+                    <tr className="border-t bg-blue-50">
+                      <td colSpan={5} className="px-6 py-4">
+                        {/* Book for user */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="text-sm font-medium text-gray-700">{t.admin.bookForUser}:</span>
+                          <select
+                            value={bookingClassId[user.id] ?? ''}
+                            onChange={e => setBookingClassId(prev => ({ ...prev, [user.id]: e.target.value }))}
+                            className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">{t.admin.selectClass}</option>
+                            {classes
+                              .filter(c => c.status !== 'cancelled')
+                              .map(c => (
+                                <option key={c.id} value={c.id}>
+                                  {c.title} — {new Date(c.startTime).toLocaleDateString()}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            onClick={() => handleBookForUser(user.id)}
+                            disabled={!bookingClassId[user.id]}
+                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-40"
+                          >
+                            Book
+                          </button>
+                          {bookingFeedback[user.id] && (
+                            <span className="text-sm text-green-600">{bookingFeedback[user.id]}</span>
+                          )}
+                        </div>
+
+                        {/* Booking list */}
+                        {(userBookings[user.id] ?? []).length === 0 ? (
+                          <p className="text-sm text-gray-500">{t.admin.noBookings}</p>
+                        ) : (
+                          <table className="w-full text-sm border rounded overflow-hidden">
+                            <thead className="bg-gray-100">
+                              <tr>
+                                <th className="text-left px-3 py-2 text-gray-600">Class</th>
+                                <th className="text-left px-3 py-2 text-gray-600">Date</th>
+                                <th className="text-left px-3 py-2 text-gray-600">Status</th>
+                                <th className="text-left px-3 py-2 text-gray-600">Payment</th>
+                                <th className="px-3 py-2"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(userBookings[user.id] ?? []).map(b => (
+                                <tr key={b.id} className="border-t bg-white">
+                                  <td className="px-3 py-2 font-medium">{b.class?.title ?? '—'}</td>
+                                  <td className="px-3 py-2 text-gray-500">
+                                    {b.class ? new Date(b.class.startTime).toLocaleString() : '—'}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                      b.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                      b.status === 'waitlisted' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-gray-100 text-gray-500'
+                                    }`}>{b.status}</span>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <select
+                                      value={paymentValues[b.id] ?? b.paymentStatus}
+                                      onChange={e => setPaymentValues(prev => ({ ...prev, [b.id]: e.target.value }))}
+                                      className="border border-gray-300 rounded px-2 py-0.5 text-xs focus:outline-none"
+                                    >
+                                      <option value="pending">Pending</option>
+                                      <option value="paid">Paid</option>
+                                      <option value="refunded">Refunded</option>
+                                    </select>
+                                  </td>
+                                  <td className="px-3 py-2 text-right space-x-2 whitespace-nowrap">
+                                    <button
+                                      onClick={() => handleUpdatePayment(b.id, user.id)}
+                                      className="text-xs px-2 py-1 bg-gray-800 text-white rounded hover:bg-gray-700"
+                                    >
+                                      {t.admin.updatePayment}
+                                    </button>
+                                    {paymentFeedback[b.id] && (
+                                      <span className="text-xs text-green-600">{paymentFeedback[b.id]}</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Classes */}

@@ -64,7 +64,14 @@
     "settings": "Settings",
     "cancellationWindow": "Cancellation Window (hours)",
     "cancellationWindowHelp": "Students cannot cancel a booking within this many hours of the class start time.",
-    "settingsSaved": "Settings saved"
+    "settingsSaved": "Settings saved",
+    "manageBookings": "Manage Bookings",
+    "hideBookings": "Hide",
+    "bookForUser": "Book Class for User",
+    "selectClass": "Select a class...",
+    "noBookings": "No bookings",
+    "bookingCreated": "Booking created",
+    "paymentUpdated": "Payment updated"
   },
   "form": {
     "title": "Title",

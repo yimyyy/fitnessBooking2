@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { createBooking, cancelBooking, getUserBookings } from '../services/bookingService';
 import { getSetting } from '../services/settingsService';
+import { ForbiddenError } from '../errors/AppError';
 
 export const bookingsRouter = Router();
 
@@ -16,6 +17,9 @@ bookingsRouter.get('/my', authenticate, async (req: AuthRequest, res, next) => {
 
 bookingsRouter.post('/', authenticate, async (req: AuthRequest, res, next) => {
   try {
+    if (req.user!.role === 'admin') {
+      return next(new ForbiddenError('Admins cannot book classes for themselves. Use the admin panel to book on behalf of a user.'));
+    }
     const { classId } = req.body;
     const booking = await createBooking(req.user!.id, classId);
     res.status(201).json({ booking });

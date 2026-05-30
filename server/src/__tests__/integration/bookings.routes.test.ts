@@ -41,6 +41,14 @@ describe('Bookings routes', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('POST /api/v1/bookings', () => {
+    it('returns 403 when admin tries to book for themselves', async () => {
+      const res = await request(app)
+        .post('/api/v1/bookings')
+        .set('Authorization', `Bearer ${makeToken('admin', 'admin-1')}`)
+        .send({ classId: 'class-1' });
+      expect(res.status).toBe(403);
+    });
+
     it('returns 201 confirmed when spots available', async () => {
       (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);
       (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue(null);

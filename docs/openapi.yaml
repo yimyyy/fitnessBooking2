@@ -379,6 +379,55 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Booking' }
 
+  /admin/bookings:
+    post:
+      summary: Book a class on behalf of a user (admin only)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, classId]
+              properties:
+                userId: { type: string }
+                classId: { type: string }
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking: { $ref: '#/components/schemas/Booking' }
+        '403':
+          description: Admin cannot book for themselves
+
+  /admin/users/{userId}/bookings:
+    get:
+      summary: Get all bookings for a specific user (admin only)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: User's bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items: { $ref: '#/components/schemas/Booking' }
+
   /admin/bookings/{id}/payment:
     patch:
       summary: Update payment status (admin only)
