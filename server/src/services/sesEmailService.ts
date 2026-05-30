@@ -14,17 +14,33 @@ function formatDate(date: Date): string {
   });
 }
 
-/**
- * Sends a booking confirmation email via AWS SES.
- * @param user - The user who made the booking
- * @param fitnessClass - The class that was booked
- * @returns SES send result
- * @throws Will log error and not throw, to prevent booking failure
- * @example
- * await sendBookingConfirmation(user, fitnessClass);
- */
+function devLog(to: string, subject: string, html: string): void {
+  const preview = html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const border = '─'.repeat(60);
+  console.log(`\n${border}`);
+  console.log(`📧  [DEV EMAIL]`);
+  console.log(`    From:    ${FROM_EMAIL}`);
+  console.log(`    To:      ${to}`);
+  console.log(`    Subject: ${subject}`);
+  console.log(`    Body:\n${preview}`);
+  console.log(`${border}\n`);
+}
+
+async function send(params: SendEmailCommandInput): Promise<void> {
+  const to = (params.Destination?.ToAddresses ?? []).join(', ');
+  const subject = params.Message?.Subject?.Data ?? '';
+  const html = params.Message?.Body?.Html?.Data ?? '';
+
+  if (process.env.NODE_ENV !== 'production') {
+    devLog(to, subject, html);
+    return;
+  }
+
+  await sesClient.send(new SendEmailCommand(params));
+}
+
 export async function sendBookingConfirmation(user: User, fitnessClass: Class & { instructor?: User }) {
-  const params: SendEmailCommandInput = {
+  return send({
     Source: FROM_EMAIL,
     Destination: { ToAddresses: [user.email] },
     Message: {
@@ -45,18 +61,11 @@ export async function sendBookingConfirmation(user: User, fitnessClass: Class & 
         },
       },
     },
-  };
-  return sesClient.send(new SendEmailCommand(params));
+  });
 }
 
-/**
- * Sends a cancellation confirmation email via AWS SES.
- * @param user - The user who cancelled
- * @param fitnessClass - The class that was cancelled
- * @returns SES send result
- */
 export async function sendCancellationConfirmation(user: User, fitnessClass: Class) {
-  const params: SendEmailCommandInput = {
+  return send({
     Source: FROM_EMAIL,
     Destination: { ToAddresses: [user.email] },
     Message: {
@@ -72,18 +81,11 @@ export async function sendCancellationConfirmation(user: User, fitnessClass: Cla
         },
       },
     },
-  };
-  return sesClient.send(new SendEmailCommand(params));
+  });
 }
 
-/**
- * Sends a waitlist promotion email via AWS SES.
- * @param user - The user being promoted from waitlist
- * @param fitnessClass - The class they've been promoted into
- * @returns SES send result
- */
 export async function sendWaitlistPromotion(user: User, fitnessClass: Class) {
-  const params: SendEmailCommandInput = {
+  return send({
     Source: FROM_EMAIL,
     Destination: { ToAddresses: [user.email] },
     Message: {
@@ -103,18 +105,11 @@ export async function sendWaitlistPromotion(user: User, fitnessClass: Class) {
         },
       },
     },
-  };
-  return sesClient.send(new SendEmailCommand(params));
+  });
 }
 
-/**
- * Sends a 24-hour reminder email for an upcoming class.
- * @param user - The user to remind
- * @param fitnessClass - The upcoming class
- * @returns SES send result
- */
 export async function sendClassReminder(user: User, fitnessClass: Class) {
-  const params: SendEmailCommandInput = {
+  return send({
     Source: FROM_EMAIL,
     Destination: { ToAddresses: [user.email] },
     Message: {
@@ -134,6 +129,5 @@ export async function sendClassReminder(user: User, fitnessClass: Class) {
         },
       },
     },
-  };
-  return sesClient.send(new SendEmailCommand(params));
+  });
 }

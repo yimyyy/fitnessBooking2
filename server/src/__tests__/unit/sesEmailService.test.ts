@@ -26,7 +26,13 @@ const mockClass = {
 };
 
 describe('sesEmailService', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.NODE_ENV = 'production'; // force SES path (not dev logger)
+  });
+  afterEach(() => {
+    process.env.NODE_ENV = 'test';
+  });
 
   it('sendBookingConfirmation calls SES with correct parameters', async () => {
     await sendBookingConfirmation(mockUser, mockClass);
