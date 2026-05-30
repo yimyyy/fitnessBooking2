@@ -117,6 +117,9 @@ All admin routes require admin role.
     - Admin can update payment status per booking (pending/paid/refunded)
 - **Settings tab**: configurable cancellation window (hours) with save confirmation
 - **Logs tab**: table of in-memory log entries (email sends and server errors); Refresh button; auto-fetches on tab activation
+  - Type filter pills (All / Email / Error) with per-type count badges; active pill is colour-coded
+  - Each row shows: timestamp, type badge, message; Details button appears only when a `details` field exists
+  - Clicking Details expands a preformatted details panel inline below the row; clicking Hide collapses it
 
 **Login (`/login`)** — email + password; redirects to home on success
 
@@ -142,7 +145,7 @@ All admin routes require admin role.
   - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403)
   - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility), CalendarView, LanguageToggle, PaymentBadge
+  - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
   - Hooks: useAuth, useClasses, useBooking
 - **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
   - `auth.cy.ts` — login, register, protected route redirects
