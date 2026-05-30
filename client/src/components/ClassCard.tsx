@@ -67,14 +67,14 @@ export function ClassCard({ fitnessClass, userBookingStatus, onBook, onCancel, i
             className={`px-4 py-2 rounded text-sm font-medium transition disabled:opacity-50 ${
               hasBooking
                 ? 'bg-red-500 text-white hover:bg-red-600'
-                : fitnessClass.status === 'full'
+                : (fitnessClass.status === 'full' || spotsLeft <= 0)
                 ? 'bg-yellow-500 text-white hover:bg-yellow-600'
                 : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
             {isBookingLoading ? '...' :
              hasBooking ? t.classes.cancel :
-             fitnessClass.status === 'full' ? t.classes.joinWaitlist :
+             (fitnessClass.status === 'full' || spotsLeft <= 0) ? t.classes.joinWaitlist :
              t.classes.book}
           </button>
         </div>

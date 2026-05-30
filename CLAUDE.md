@@ -96,7 +96,10 @@ All admin routes require admin role.
 
 **Classes (`/classes`)**
 - Toggle between Upcoming and Past Classes views
-- Upcoming view: card or calendar layout (toggle between the two); authenticated non-admin users see Book / Join Waitlist / Cancel Booking button per class
+- Upcoming view: card or calendar layout (toggle between the two); authenticated non-admin users see Book Now / Join Waitlist / Cancel Booking button per class
+- **Join Waitlist** is shown (yellow button) when `status === 'full'` OR `spotsLeft <= 0`; clicking it sends a normal booking request which the server handles as waitlisted
+- **Book Now** is shown (blue button) when spots are available
+- **Cancel Booking** is shown (red button) when the user already has a confirmed or waitlisted booking
 - Admin users see the class list but no booking buttons (they book via the admin panel)
 - Past Classes view: list only; no booking buttons shown
 - Each class card shows: title, instructor, date/time, location, price, capacity/spots left, status badge
@@ -154,7 +157,7 @@ All admin routes require admin role.
   - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403; GET/POST/DELETE locations — auth and validation)
   - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
+  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
   - Hooks: useAuth, useClasses, useBooking
 - **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
   - `auth.cy.ts` — login, register, protected route redirects
