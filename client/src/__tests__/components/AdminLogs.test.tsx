@@ -28,11 +28,14 @@ vi.mock('../../api/client', () => ({
 vi.mock('../../api/admin', () => ({
   adminApi: {
     getSettings: vi.fn().mockResolvedValue({ data: { settings: { cancellationWindowHours: '24' } } }),
+    getLocations: vi.fn().mockResolvedValue({ data: { locations: [] } }),
     getLogs: vi.fn(),
     getUserBookings: vi.fn(),
     bookForUser: vi.fn(),
     updatePayment: vi.fn(),
     updateUserRole: vi.fn(),
+    createLocation: vi.fn(),
+    deleteLocation: vi.fn(),
   },
 }));
 

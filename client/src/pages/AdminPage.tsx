@@ -5,7 +5,7 @@ import type { FitnessClass, CreateClassData } from '../api/classes';
 import { AdminClassForm } from '../components/AdminClassForm';
 import { apiClient } from '../api/client';
 import { adminApi } from '../api/admin';
-import type { AdminBooking, LogEntry } from '../api/admin';
+import type { AdminBooking, LogEntry, Location } from '../api/admin';
 
 interface UserRow {
   id: string;
@@ -38,6 +38,11 @@ export function AdminPage() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // ── locations state ───────────────────────────────────────────────────────
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [newLocationName, setNewLocationName] = useState('');
+  const [locationFeedback, setLocationFeedback] = useState('');
+
   // ── class form state ──────────────────────────────────────────────────────
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<FitnessClass | null>(null);
@@ -67,7 +72,8 @@ export function AdminPage() {
       classesApi.getAll(),
       apiClient.get('/admin/users'),
       adminApi.getSettings(),
-    ]).then(([statsRes, classesRes, usersRes, settingsRes]) => {
+      adminApi.getLocations(),
+    ]).then(([statsRes, classesRes, usersRes, settingsRes, locationsRes]) => {
       setStats(statsRes.data);
       setClasses(classesRes.data.classes);
       const allUsers = usersRes.data.users as UserRow[];
@@ -78,6 +84,7 @@ export function AdminPage() {
           .map((u) => ({ id: u.id, name: u.name }))
       );
       setCancellationWindow(settingsRes.data.settings.cancellationWindowHours ?? '24');
+      setLocations(locationsRes.data.locations);
     }).catch(console.error);
   }, []);
 
@@ -206,6 +213,26 @@ export function AdminPage() {
     } catch (err) { console.error(err); }
   };
 
+  const handleAddLocation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newLocationName.trim();
+    if (!name) return;
+    try {
+      const res = await adminApi.createLocation(name);
+      setLocations(prev => [...prev, res.data.location].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewLocationName('');
+      setLocationFeedback(t.admin.locationAdded);
+      setTimeout(() => setLocationFeedback(''), 3000);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    try {
+      await adminApi.deleteLocation(id);
+      setLocations(prev => prev.filter(l => l.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
   // ── tab content ───────────────────────────────────────────────────────────
   const renderStats = () => (
     <div className="space-y-6">
@@ -245,6 +272,7 @@ export function AdminPage() {
             onCancel={() => { setShowForm(false); setEditingClass(null); setFormError(null); }}
             initial={editingClass || undefined}
             instructors={instructors}
+            locations={locations.map(l => l.name)}
           />
         </div>
       )}
@@ -433,8 +461,10 @@ export function AdminPage() {
   );
 
   const renderSettings = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">{t.admin.settings}</h2>
+
+      {/* Cancellation window */}
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSaveSettings} className="flex items-end gap-4">
           <div>
@@ -451,6 +481,41 @@ export function AdminPage() {
           <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t.form.save}</button>
           {settingsSaved && <span className="text-sm text-green-600">{t.admin.settingsSaved}</span>}
         </form>
+      </div>
+
+      {/* Locations */}
+      <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700">{t.admin.locations}</h3>
+        <form onSubmit={handleAddLocation} className="flex items-center gap-3">
+          <input
+            type="text"
+            placeholder={t.admin.locationName}
+            value={newLocationName}
+            onChange={e => setNewLocationName(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm flex-1 max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+            {t.admin.addLocation}
+          </button>
+          {locationFeedback && <span className="text-sm text-green-600">{locationFeedback}</span>}
+        </form>
+        {locations.length === 0 ? (
+          <p className="text-sm text-gray-400">No locations yet.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {locations.map(loc => (
+              <li key={loc.id} className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-700">{loc.name}</span>
+                <button
+                  onClick={() => handleDeleteLocation(loc.id)}
+                  className="text-xs text-red-500 hover:underline"
+                >
+                  {t.admin.deleteLocation}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

@@ -68,12 +68,20 @@ All admin routes require admin role.
 - `PUT /api/v1/admin/settings` — updates a single setting by `{ key, value }`; currently supported key: `cancellationWindowHours`
 - `PATCH /api/v1/admin/users/:userId/role` — updates a user's role; body: `{ role: "admin" | "instructor" | "student" }`
 - `GET /api/v1/admin/logs` — returns in-memory log entries (up to 200, newest first); each entry has `id`, `timestamp`, `type` (`"email"` or `"error"`), `message`, `details`
+- `GET /api/v1/admin/locations` — returns all locations ordered by name
+- `POST /api/v1/admin/locations` — creates a new location; body: `{ name }`; name must be non-empty and unique
+- `DELETE /api/v1/admin/locations/:id` — deletes a location
 
 ## Settings
 - `cancellationWindowHours` — number of hours before class start that cancellation is allowed
 - Falls back to `CANCELLATION_WINDOW_HOURS` env var, then to `"24"` if not set
 - Stored in the `AppSettings` table in the database
 - Configurable from the admin dashboard UI
+
+## Locations
+- Stored in the `Location` table (`id`, `name` unique, `createdAt`)
+- Managed exclusively through the admin Settings tab (add / remove)
+- The class creation/edit form uses a dropdown populated from this list
 
 ## Emails (AWS SES)
 - **Booking confirmation** — sent when a student's booking is `confirmed`
@@ -107,6 +115,7 @@ All admin routes require admin role.
   - Inline create/edit form with instructor selector (populated from admin/instructor users):
     - Start time: date picker + 30-minute time select + custom `<input type="time">` for free entry
     - Duration in minutes (endTime computed as startTime + duration before submitting)
+    - Location: dropdown populated from the admin-managed locations list
     - Recurring checkbox; when checked shows day-of-week pills and an optional end date (date only, stored as `T00:00:00Z`)
     - API errors displayed in a red banner above the form
 - **Users tab**: table of all users (name, email, role, booking count)
@@ -115,7 +124,7 @@ All admin routes require admin role.
     - Expanded row: all their bookings (class, date, status, payment)
     - Admin can book a class on behalf of the user (class selector + submit)
     - Admin can update payment status per booking (pending/paid/refunded)
-- **Settings tab**: configurable cancellation window (hours) with save confirmation
+- **Settings tab**: configurable cancellation window (hours) with save confirmation; location management — add new locations (name input + Add button) and remove existing ones; locations are stored in the database and populate the class creation form dropdown
 - **Logs tab**: table of in-memory log entries (email sends and server errors); Refresh button; auto-fetches on tab activation
   - Type filter pills (All / Email / Error) with per-type count badges; active pill is colour-coded
   - Each row shows: timestamp, type badge, message; Details button appears only when a `details` field exists
@@ -142,10 +151,10 @@ All admin routes require admin role.
 
 ## Tests
 - **Server** (Jest + Supertest, all mocked — no real DB needed):
-  - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403)
+  - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403; GET/POST/DELETE locations — auth and validation)
   - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
+  - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
   - Hooks: useAuth, useClasses, useBooking
 - **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
   - `auth.cy.ts` — login, register, protected route redirects

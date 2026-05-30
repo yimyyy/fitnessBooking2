@@ -16,6 +16,11 @@ jest.mock('../../prisma/client', () => ({
       findMany: jest.fn().mockResolvedValue([]),
       upsert: jest.fn(),
     },
+    location: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
+    },
   },
 }));
 
@@ -120,6 +125,72 @@ describe('Admin routes', () => {
         .send({ paymentStatus: 'paid' });
       expect(res.status).toBe(200);
       expect(res.body.booking.paymentStatus).toBe('paid');
+    });
+  });
+
+  describe('GET /api/v1/admin/locations', () => {
+    it('returns locations list for admin', async () => {
+      (mockPrisma.location.findMany as jest.Mock).mockResolvedValue([
+        { id: 'loc-1', name: 'Studio A', createdAt: new Date() },
+        { id: 'loc-2', name: 'Room B', createdAt: new Date() },
+      ]);
+      const res = await request(app)
+        .get('/api/v1/admin/locations')
+        .set('Authorization', `Bearer ${makeToken()}`);
+      expect(res.status).toBe(200);
+      expect(res.body.locations).toHaveLength(2);
+    });
+
+    it('returns 403 for non-admin', async () => {
+      const res = await request(app)
+        .get('/api/v1/admin/locations')
+        .set('Authorization', `Bearer ${makeToken('student', 'user-1')}`);
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('POST /api/v1/admin/locations', () => {
+    it('creates a location and returns 201', async () => {
+      (mockPrisma.location.create as jest.Mock).mockResolvedValue({ id: 'loc-1', name: 'Studio A', createdAt: new Date() });
+      const res = await request(app)
+        .post('/api/v1/admin/locations')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .send({ name: 'Studio A' });
+      expect(res.status).toBe(201);
+      expect(res.body.location.name).toBe('Studio A');
+    });
+
+    it('returns 400 for empty name', async () => {
+      const res = await request(app)
+        .post('/api/v1/admin/locations')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .send({ name: '' });
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 403 for non-admin', async () => {
+      const res = await request(app)
+        .post('/api/v1/admin/locations')
+        .set('Authorization', `Bearer ${makeToken('student', 'user-1')}`)
+        .send({ name: 'Studio A' });
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('DELETE /api/v1/admin/locations/:id', () => {
+    it('deletes a location and returns 204', async () => {
+      (mockPrisma.location.delete as jest.Mock).mockResolvedValue({});
+      const res = await request(app)
+        .delete('/api/v1/admin/locations/loc-1')
+        .set('Authorization', `Bearer ${makeToken()}`);
+      expect(res.status).toBe(204);
+    });
+
+    it('returns 403 for non-admin', async () => {
+      const res = await request(app)
+        .delete('/api/v1/admin/locations/loc-1')
+        .set('Authorization', `Bearer ${makeToken('student', 'user-1')}`);
+      expect(res.status).toBe(403);
     });
   });
 

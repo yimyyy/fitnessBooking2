@@ -7,6 +7,7 @@ interface Props {
   onCancel: () => void;
   initial?: Partial<CreateClassData>;
   instructors: { id: string; name: string }[];
+  locations: string[];
 }
 
 // 30-minute time slots for the picker: "00:00", "00:30", … "23:30"
@@ -57,7 +58,7 @@ function computeDuration(start: string | undefined, end: string | undefined): nu
   return Math.max(1, Math.round(ms / 60000));
 }
 
-export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Props) {
+export function AdminClassForm({ onSubmit, onCancel, initial, instructors, locations }: Props) {
   const { t } = useLanguage();
   const [form, setForm] = useState<FormState>({
     title: initial?.title || '',
@@ -191,7 +192,19 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
       {field('duration', t.form.duration, 'number')}
       {field('capacity', t.form.capacity, 'number')}
       {field('price', t.form.price, 'number')}
-      {field('location', t.form.location)}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t.form.location}</label>
+        <select
+          value={form.location}
+          onChange={e => setForm({ ...form, location: e.target.value })}
+          className={`w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.location ? 'border-red-400' : 'border-gray-300'}`}
+        >
+          <option value="">-- Select location --</option>
+          {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+        </select>
+        {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+      </div>
 
       {/* Recurring */}
       <div className="border border-gray-200 rounded-lg p-4 space-y-3">

@@ -91,3 +91,9 @@ model AppSettings {
   key   String @id
   value String
 }
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}

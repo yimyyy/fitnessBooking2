@@ -77,7 +77,12 @@
     "paymentUpdated": "Payment updated",
     "cancelClassConfirm": "Are you sure you want to cancel this class?",
     "changeRole": "Change Role",
-    "roleSaved": "Role updated"
+    "roleSaved": "Role updated",
+    "locations": "Locations",
+    "addLocation": "Add location",
+    "locationName": "Location name",
+    "locationAdded": "Location added",
+    "deleteLocation": "Remove"
   },
   "form": {
     "title": "Title",

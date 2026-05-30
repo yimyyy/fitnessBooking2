@@ -1,5 +1,10 @@
 import { apiClient } from './client';
 
+export interface Location {
+  id: string;
+  name: string;
+}
+
 export interface AdminBooking {
   id: string;
   userId: string;
@@ -39,6 +44,15 @@ export const adminApi = {
 
   updateUserRole: (userId: string, role: string) =>
     apiClient.patch<{ user: { id: string; name: string; email: string; role: string } }>(`/admin/users/${userId}/role`, { role }),
+
+  getLocations: () =>
+    apiClient.get<{ locations: Location[] }>('/admin/locations'),
+
+  createLocation: (name: string) =>
+    apiClient.post<{ location: Location }>('/admin/locations', { name }),
+
+  deleteLocation: (id: string) =>
+    apiClient.delete(`/admin/locations/${id}`),
 };
 
 export interface LogEntry {

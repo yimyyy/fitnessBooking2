@@ -77,7 +77,12 @@
     "paymentUpdated": "Paiement mis à jour",
     "cancelClassConfirm": "Êtes-vous sûr de vouloir annuler ce cours?",
     "changeRole": "Changer le Rôle",
-    "roleSaved": "Rôle mis à jour"
+    "roleSaved": "Rôle mis à jour",
+    "locations": "Emplacements",
+    "addLocation": "Ajouter un emplacement",
+    "locationName": "Nom de l'emplacement",
+    "locationAdded": "Emplacement ajouté",
+    "deleteLocation": "Supprimer"
   },
   "form": {
     "title": "Titre",

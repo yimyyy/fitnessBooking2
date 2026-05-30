@@ -149,6 +149,35 @@ adminRouter.patch('/bookings/:id/promote', async (req, res, next) => {
   }
 });
 
+// Locations
+adminRouter.get('/locations', async (_req, res, next) => {
+  try {
+    const locations = await prisma.location.findMany({ orderBy: { name: 'asc' } });
+    res.json({ locations });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.post('/locations', async (req, res, next) => {
+  try {
+    const { name } = z.object({ name: z.string().min(1) }).parse(req.body);
+    const location = await prisma.location.create({ data: { name } });
+    res.status(201).json({ location });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.delete('/locations/:id', async (req, res, next) => {
+  try {
+    await prisma.location.delete({ where: { id: String(req.params.id) } });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Update user role
 adminRouter.patch('/users/:userId/role', async (req, res, next) => {
   try {
