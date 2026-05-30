@@ -87,6 +87,30 @@ export async function sendCancellationConfirmation(user: User, fitnessClass: Cla
   });
 }
 
+export async function sendWaitlistConfirmation(user: User, fitnessClass: Class) {
+  return send({
+    Source: FROM_EMAIL,
+    Destination: { ToAddresses: [user.email] },
+    Message: {
+      Subject: { Data: `You're on the Waitlist: ${fitnessClass.title}` },
+      Body: {
+        Html: {
+          Data: `
+            <h2>You're on the Waitlist!</h2>
+            <p>Hi ${user.name},</p>
+            <p>The class <strong>${fitnessClass.title}</strong> is currently full, but you've been added to the waitlist.</p>
+            <ul>
+              <li><strong>Date:</strong> ${formatDate(fitnessClass.startTime)}</li>
+              <li><strong>Location:</strong> ${fitnessClass.location}</li>
+            </ul>
+            <p>We'll email you right away if a spot opens up!</p>
+          `,
+        },
+      },
+    },
+  });
+}
+
 export async function sendWaitlistPromotion(user: User, fitnessClass: Class) {
   return send({
     Source: FROM_EMAIL,

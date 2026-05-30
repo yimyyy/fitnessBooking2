@@ -1,4 +1,4 @@
-import { sendBookingConfirmation, sendWaitlistPromotion } from '../../services/sesEmailService';
+import { sendBookingConfirmation, sendWaitlistConfirmation, sendWaitlistPromotion } from '../../services/sesEmailService';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 jest.mock('@aws-sdk/client-ses', () => {
@@ -39,6 +39,15 @@ describe('sesEmailService', () => {
     expect(mockModule.__mockSend).toHaveBeenCalled();
     const callArg = (SendEmailCommand as unknown as jest.Mock).mock.calls[0][0];
     expect(callArg.Destination.ToAddresses).toContain(mockUser.email);
+    expect(callArg.Message.Subject.Data).toContain(mockClass.title);
+  });
+
+  it('sendWaitlistConfirmation sends to correct address with waitlist subject', async () => {
+    await sendWaitlistConfirmation(mockUser, mockClass);
+    expect(mockModule.__mockSend).toHaveBeenCalled();
+    const callArg = (SendEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+    expect(callArg.Destination.ToAddresses).toContain(mockUser.email);
+    expect(callArg.Message.Subject.Data).toContain("Waitlist");
     expect(callArg.Message.Subject.Data).toContain(mockClass.title);
   });
 

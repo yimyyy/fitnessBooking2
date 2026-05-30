@@ -85,6 +85,7 @@ All admin routes require admin role.
 
 ## Emails (AWS SES)
 - **Booking confirmation** — sent when a student's booking is `confirmed`
+- **Waitlist confirmation** — sent when a student's booking is `waitlisted` (class full at time of booking)
 - **Cancellation confirmation** — sent when a student cancels a booking
 - **Waitlist promotion** — sent when a student is automatically promoted from the waitlist
 - **24-hour reminder** — sent by a cron job that runs every hour; targets confirmed bookings for classes starting in the next 24–25 hours (1-hour window to avoid duplicates); a `Notification` record is written after each successful send

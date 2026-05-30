@@ -1,6 +1,7 @@
 import { createBooking, cancelBooking } from '../../services/bookingService';
 import { prisma } from '../../prisma/client';
 import { ConflictError, NotFoundError, ForbiddenError } from '../../errors/AppError';
+import * as emailService from '../../services/sesEmailService';
 
 jest.mock('../../prisma/client', () => ({
   prisma: {
@@ -14,6 +15,7 @@ jest.mock('../../services/sesEmailService', () => ({
   sendBookingConfirmation: jest.fn().mockResolvedValue(undefined),
   sendCancellationConfirmation: jest.fn().mockResolvedValue(undefined),
   sendWaitlistPromotion: jest.fn().mockResolvedValue(undefined),
+  sendWaitlistConfirmation: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
@@ -60,8 +62,35 @@ describe('bookingService', () => {
 
       const booking = await createBooking('user-1', 'class-1');
       expect(booking.status).toBe('waitlisted');
-      // Class should NOT be updated to 'full' again when booking goes to waitlist
       expect(mockPrisma.class.update).not.toHaveBeenCalled();
+    });
+
+    it('sends waitlist confirmation email when booking is waitlisted', async () => {
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);
+      (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.booking.count as jest.Mock).mockResolvedValue(10);
+      (mockPrisma.booking.create as jest.Mock).mockResolvedValue({
+        id: 'booking-2', userId: 'user-1', classId: 'class-1', status: 'waitlisted',
+        user: mockUser, class: mockClass,
+      });
+
+      await createBooking('user-1', 'class-1');
+      expect(emailService.sendWaitlistConfirmation).toHaveBeenCalledWith(mockUser, mockClass);
+      expect(emailService.sendBookingConfirmation).not.toHaveBeenCalled();
+    });
+
+    it('sends booking confirmation email (not waitlist) when booking is confirmed', async () => {
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);
+      (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.booking.count as jest.Mock).mockResolvedValue(5);
+      (mockPrisma.booking.create as jest.Mock).mockResolvedValue({
+        id: 'booking-1', userId: 'user-1', classId: 'class-1', status: 'confirmed',
+        user: mockUser, class: mockClass,
+      });
+
+      await createBooking('user-1', 'class-1');
+      expect(emailService.sendBookingConfirmation).toHaveBeenCalledWith(mockUser, mockClass);
+      expect(emailService.sendWaitlistConfirmation).not.toHaveBeenCalled();
     });
 
     it('marks class as full when the last confirmed spot is taken', async () => {

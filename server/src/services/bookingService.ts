@@ -1,6 +1,6 @@
 import { prisma } from '../prisma/client';
 import { ConflictError, NotFoundError, ForbiddenError } from '../errors/AppError';
-import { sendBookingConfirmation, sendCancellationConfirmation, sendWaitlistPromotion } from './sesEmailService';
+import { sendBookingConfirmation, sendCancellationConfirmation, sendWaitlistPromotion, sendWaitlistConfirmation } from './sesEmailService';
 
 /**
  * Books a student into a fitness class, or adds them to the waitlist if full.
@@ -58,7 +58,7 @@ export async function createBooking(userId: string, classId: string) {
   // Send confirmation email
   try {
     if (isWaitlisted) {
-      // no dedicated waitlist booking email yet, use confirmation with note
+      await sendWaitlistConfirmation(booking.user, booking.class);
     } else {
       await sendBookingConfirmation(booking.user, booking.class);
     }
