@@ -19,14 +19,38 @@ const DAYS = [
   { key: 'SU', label: 'Sun' },
 ];
 
+type FormState = {
+  title: string;
+  description: string;
+  instructorId: string;
+  startTime: string;
+  duration: number;
+  capacity: number;
+  price: number;
+  location: string;
+  isRecurring: boolean;
+  recurrenceRule: string;
+};
+
+function toLocalInput(iso: string | undefined): string {
+  if (!iso) return '';
+  return iso.slice(0, 16);
+}
+
+function computeDuration(start: string | undefined, end: string | undefined): number {
+  if (!start || !end) return 60;
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  return Math.max(1, Math.round(ms / 60000));
+}
+
 export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Props) {
   const { t } = useLanguage();
-  const [form, setForm] = useState<Partial<CreateClassData>>({
+  const [form, setForm] = useState<FormState>({
     title: initial?.title || '',
     description: initial?.description || '',
     instructorId: initial?.instructorId || '',
-    startTime: initial?.startTime || '',
-    endTime: initial?.endTime || '',
+    startTime: toLocalInput(initial?.startTime),
+    duration: computeDuration(initial?.startTime, initial?.endTime),
     capacity: initial?.capacity || 10,
     price: initial?.price || 0,
     location: initial?.location || '',
@@ -40,7 +64,7 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
     if (!form.title) e.title = t.form.required;
     if (!form.instructorId) e.instructorId = t.form.required;
     if (!form.startTime) e.startTime = t.form.required;
-    if (!form.endTime) e.endTime = t.form.required;
+    if (!form.duration || form.duration < 1) e.duration = t.form.required;
     if (!form.location) e.location = t.form.required;
     if (!form.capacity || form.capacity < 1) e.capacity = t.form.required;
     setErrors(e);
@@ -49,10 +73,24 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) onSubmit(form as CreateClassData);
+    if (!validate()) return;
+    const startISO = form.startTime + ':00Z';
+    const endISO = new Date(new Date(startISO).getTime() + form.duration * 60000).toISOString();
+    onSubmit({
+      title: form.title,
+      description: form.description || undefined,
+      instructorId: form.instructorId,
+      startTime: startISO,
+      endTime: endISO,
+      capacity: form.capacity,
+      price: form.price,
+      location: form.location,
+      isRecurring: form.isRecurring,
+      recurrenceRule: form.recurrenceRule || undefined,
+    });
   };
 
-  const field = (name: keyof typeof form, label: string, type = 'text', step?: string) => (
+  const field = (name: keyof FormState, label: string, type = 'text', step?: string) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       <input
@@ -95,7 +133,7 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
 
       {/* step="1800" = 30-minute increments in the picker; free typing still works */}
       {field('startTime', t.form.startTime, 'datetime-local', '1800')}
-      {field('endTime', t.form.endTime, 'datetime-local', '1800')}
+      {field('duration', t.form.duration, 'number')}
       {field('capacity', t.form.capacity, 'number')}
       {field('price', t.form.price, 'number')}
       {field('location', t.form.location)}

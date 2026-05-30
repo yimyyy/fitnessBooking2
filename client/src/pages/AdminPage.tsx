@@ -25,6 +25,7 @@ export function AdminPage() {
   const [editingClass, setEditingClass] = useState<FitnessClass | null>(null);
   const [cancellationWindow, setCancellationWindow] = useState('24');
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Per-user booking management state
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
@@ -62,16 +63,28 @@ export function AdminPage() {
   };
 
   const handleCreate = async (data: CreateClassData) => {
-    const res = await classesApi.create(data);
-    setClasses(prev => [...prev, res.data.class]);
-    setShowForm(false);
+    try {
+      setFormError(null);
+      const res = await classesApi.create(data);
+      setClasses(prev => [...prev, res.data.class]);
+      setShowForm(false);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create class';
+      setFormError(msg);
+    }
   };
 
   const handleUpdate = async (data: CreateClassData) => {
     if (!editingClass) return;
-    const res = await classesApi.update(editingClass.id, data);
-    setClasses(prev => prev.map(c => c.id === editingClass.id ? res.data.class : c));
-    setEditingClass(null);
+    try {
+      setFormError(null);
+      const res = await classesApi.update(editingClass.id, data);
+      setClasses(prev => prev.map(c => c.id === editingClass.id ? res.data.class : c));
+      setEditingClass(null);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to update class';
+      setFormError(msg);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -321,9 +334,14 @@ export function AdminPage() {
         {(showForm || editingClass) && (
           <div className="bg-white rounded-lg shadow p-6 mb-4">
             <h3 className="font-medium mb-4">{editingClass ? t.admin.editClass : t.admin.createClass}</h3>
+            {formError && (
+              <div className="mb-4 bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded text-sm">
+                {formError}
+              </div>
+            )}
             <AdminClassForm
               onSubmit={editingClass ? handleUpdate : handleCreate}
-              onCancel={() => { setShowForm(false); setEditingClass(null); }}
+              onCancel={() => { setShowForm(false); setEditingClass(null); setFormError(null); }}
               initial={editingClass || undefined}
               instructors={instructors}
             />

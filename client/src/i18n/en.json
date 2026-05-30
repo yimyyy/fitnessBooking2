@@ -80,7 +80,7 @@
     "title": "Title",
     "description": "Description",
     "startTime": "Start Time",
-    "endTime": "End Time",
+    "duration": "Duration (minutes)",
     "capacity": "Capacity",
     "price": "Price ($)",
     "location": "Location",
