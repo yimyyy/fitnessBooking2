@@ -88,7 +88,9 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "required": "Ce champ est requis",
-    "invalidDate": "Date invalide"
+    "invalidDate": "Date invalide",
+    "recurring": "Cours récurrent",
+    "recurringDays": "Répéter le"
   },
   "errors": {
     "notFound": "Non trouvé",

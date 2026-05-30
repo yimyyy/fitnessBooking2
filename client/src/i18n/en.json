@@ -88,7 +88,9 @@
     "save": "Save",
     "cancel": "Cancel",
     "required": "This field is required",
-    "invalidDate": "Invalid date"
+    "invalidDate": "Invalid date",
+    "recurring": "Recurring class",
+    "recurringDays": "Repeat on"
   },
   "errors": {
     "notFound": "Not found",
