@@ -1,0 +1,18 @@
+[
+  {
+    "id": "booking-1",
+    "userId": "student-1",
+    "classId": "class-1",
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentAmount": 20,
+    "bookedAt": "2026-11-01T10:00:00.000Z",
+    "class": {
+      "id": "class-1",
+      "title": "Morning Yoga",
+      "startTime": "2026-12-01T10:00:00.000Z",
+      "location": "Studio A",
+      "instructor": { "name": "Jane Smith" }
+    }
+  }
+]

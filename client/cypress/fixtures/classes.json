@@ -1,0 +1,30 @@
+[
+  {
+    "id": "class-1",
+    "title": "Morning Yoga",
+    "description": "A gentle morning yoga session",
+    "instructorId": "instr-1",
+    "instructor": { "id": "instr-1", "name": "Jane Smith", "email": "instructor@fitness.com" },
+    "startTime": "2026-12-01T10:00:00.000Z",
+    "endTime": "2026-12-01T11:00:00.000Z",
+    "capacity": 10,
+    "price": 20,
+    "location": "Studio A",
+    "status": "upcoming",
+    "_count": { "bookings": 3 }
+  },
+  {
+    "id": "class-2",
+    "title": "HIIT Cardio",
+    "description": "High-intensity interval training",
+    "instructorId": "instr-1",
+    "instructor": { "id": "instr-1", "name": "Jane Smith", "email": "instructor@fitness.com" },
+    "startTime": "2026-12-02T09:00:00.000Z",
+    "endTime": "2026-12-02T09:45:00.000Z",
+    "capacity": 20,
+    "price": 25,
+    "location": "Main Floor",
+    "status": "upcoming",
+    "_count": { "bookings": 18 }
+  }
+]
