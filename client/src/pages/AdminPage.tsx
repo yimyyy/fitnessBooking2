@@ -119,9 +119,13 @@ export function AdminPage() {
       await adminApi.bookForUser(userId, classId);
       setBookingFeedback(prev => ({ ...prev, [userId]: t.admin.bookingCreated }));
       setTimeout(() => setBookingFeedback(prev => ({ ...prev, [userId]: '' })), 3000);
-      // Refresh bookings for this user
-      const res = await adminApi.getUserBookings(userId);
-      setUserBookings(prev => ({ ...prev, [userId]: res.data.bookings }));
+      // Refresh user bookings and class list (updates _count.bookings + status)
+      const [bookingsRes, classesRes] = await Promise.all([
+        adminApi.getUserBookings(userId),
+        classesApi.getAll(),
+      ]);
+      setUserBookings(prev => ({ ...prev, [userId]: bookingsRes.data.bookings }));
+      setClasses(classesRes.data.classes);
       setBookingClassId(prev => ({ ...prev, [userId]: '' }));
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error';

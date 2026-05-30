@@ -60,6 +60,26 @@ describe('bookingService', () => {
 
       const booking = await createBooking('user-1', 'class-1');
       expect(booking.status).toBe('waitlisted');
+      // Class should NOT be updated to 'full' again when booking goes to waitlist
+      expect(mockPrisma.class.update).not.toHaveBeenCalled();
+    });
+
+    it('marks class as full when the last confirmed spot is taken', async () => {
+      const almostFullClass = { ...mockClass, capacity: 2 };
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(almostFullClass);
+      (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.booking.count as jest.Mock).mockResolvedValue(1); // 1 of 2 spots taken
+      (mockPrisma.booking.create as jest.Mock).mockResolvedValue({
+        id: 'booking-3', userId: 'user-2', classId: 'class-1', status: 'confirmed',
+        user: mockUser, class: almostFullClass,
+      });
+      (mockPrisma.class.update as jest.Mock).mockResolvedValue({ ...almostFullClass, status: 'full' });
+
+      const booking = await createBooking('user-2', 'class-1');
+      expect(booking.status).toBe('confirmed');
+      expect(mockPrisma.class.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { status: 'full' } })
+      );
     });
 
     it('throws ConflictError if already booked', async () => {
