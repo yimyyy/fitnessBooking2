@@ -27,7 +27,7 @@
 - On 401 response, the client clears localStorage and redirects to `/login`
 
 ## Classes
-- `GET /api/v1/classes` — public, returns all classes
+- `GET /api/v1/classes` — public; returns upcoming classes (startTime ≥ now) by default; `?view=past` returns past classes ordered newest first
 - `GET /api/v1/classes/:id` — public, returns a single class with bookings
 - `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional), recurrenceRule (optional), parentClassId (optional)
 - `PUT /api/v1/classes/:id` — admin or instructor only; any subset of the above fields
@@ -38,6 +38,7 @@
 ## Bookings
 - `POST /api/v1/bookings` — authenticated; body: `{ classId }`
   - Admin role is blocked (403) — admins use the admin panel to book on behalf of users
+  - Cannot book a class whose startTime is in the past (409)
   - If confirmed bookings < capacity → booking is `confirmed`
   - If confirmed bookings ≥ capacity → booking is `waitlisted`
   - Cannot book a cancelled class
@@ -83,9 +84,10 @@ All admin routes require admin role.
 **Home (`/`)** — landing page
 
 **Classes (`/classes`)**
-- Lists all classes in card or calendar view (toggle between the two)
+- Toggle between Upcoming and Past Classes views
+- Upcoming view: card or calendar layout (toggle between the two); authenticated users see Book / Join Waitlist / Cancel Booking button per class
+- Past Classes view: list only; no booking buttons shown
 - Each class card shows: title, instructor, date/time, location, price, capacity/spots left, status badge
-- Authenticated users see a Book / Join Waitlist / Cancel Booking button per class
 - Unauthenticated users see the class list but cannot book
 
 **My Bookings (`/bookings`)**

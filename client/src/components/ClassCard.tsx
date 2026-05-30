@@ -7,8 +7,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 interface Props {
   fitnessClass: FitnessClass;
   userBookingStatus?: 'confirmed' | 'waitlisted' | 'cancelled';
-  onBook: () => void;
-  onCancel: () => void;
+  onBook?: () => void;
+  onCancel?: () => void;
   isBookingLoading: boolean;
 }
 
@@ -59,24 +59,26 @@ export function ClassCard({ fitnessClass, userBookingStatus, onBook, onCancel, i
         </div>
       </div>
 
-      <div className="mt-auto pt-2 flex justify-end">
-        <button
-          onClick={hasBooking ? onCancel : onBook}
-          disabled={isBookingLoading || fitnessClass.status === 'cancelled'}
-          className={`px-4 py-2 rounded text-sm font-medium transition disabled:opacity-50 ${
-            hasBooking
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : fitnessClass.status === 'full'
-              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          {isBookingLoading ? '...' :
-           hasBooking ? t.classes.cancel :
-           fitnessClass.status === 'full' ? t.classes.joinWaitlist :
-           t.classes.book}
-        </button>
-      </div>
+      {(onBook || onCancel) && (
+        <div className="mt-auto pt-2 flex justify-end">
+          <button
+            onClick={hasBooking ? onCancel : onBook}
+            disabled={isBookingLoading || fitnessClass.status === 'cancelled'}
+            className={`px-4 py-2 rounded text-sm font-medium transition disabled:opacity-50 ${
+              hasBooking
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : fitnessClass.status === 'full'
+                ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {isBookingLoading ? '...' :
+             hasBooking ? t.classes.cancel :
+             fitnessClass.status === 'full' ? t.classes.joinWaitlist :
+             t.classes.book}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

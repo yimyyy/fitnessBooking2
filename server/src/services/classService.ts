@@ -39,7 +39,7 @@ export async function createClass(data: CreateClassInput) {
  * @param filters - Optional filters (status, from, to)
  * @returns Array of class records
  */
-export async function getClasses(filters?: { status?: ClassStatus; from?: Date; to?: Date }) {
+export async function getClasses(filters?: { status?: ClassStatus; from?: Date; to?: Date; orderDesc?: boolean }) {
   return prisma.class.findMany({
     where: {
       ...(filters?.status && { status: filters.status }),
@@ -50,7 +50,7 @@ export async function getClasses(filters?: { status?: ClassStatus; from?: Date; 
       instructor: { select: { id: true, name: true, email: true } },
       _count: { select: { bookings: { where: { status: 'confirmed' } } } },
     },
-    orderBy: { startTime: 'asc' },
+    orderBy: { startTime: filters?.orderDesc ? 'desc' : 'asc' },
   });
 }
 

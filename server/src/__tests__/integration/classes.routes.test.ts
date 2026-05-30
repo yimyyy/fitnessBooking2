@@ -36,11 +36,28 @@ describe('Classes routes', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('GET /api/v1/classes', () => {
-    it('returns 200 with class list (public)', async () => {
+    it('returns 200 with upcoming class list (default)', async () => {
       (mockPrisma.class.findMany as jest.Mock).mockResolvedValue([mockClass]);
       const res = await request(app).get('/api/v1/classes');
       expect(res.status).toBe(200);
       expect(res.body.classes).toHaveLength(1);
+      expect(mockPrisma.class.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ startTime: expect.objectContaining({ gte: expect.any(Date) }) }),
+        })
+      );
+    });
+
+    it('returns past classes when view=past', async () => {
+      (mockPrisma.class.findMany as jest.Mock).mockResolvedValue([mockClass]);
+      const res = await request(app).get('/api/v1/classes?view=past');
+      expect(res.status).toBe(200);
+      expect(mockPrisma.class.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ startTime: expect.objectContaining({ lte: expect.any(Date) }) }),
+          orderBy: { startTime: 'desc' },
+        })
+      );
     });
   });
 

@@ -22,6 +22,9 @@
   "classes": {
     "title": "Fitness Classes",
     "noClasses": "No classes available",
+    "upcoming": "Upcoming",
+    "pastClasses": "Past Classes",
+    "noPastClasses": "No past classes",
     "book": "Book Now",
     "joinWaitlist": "Join Waitlist",
     "cancel": "Cancel Booking",

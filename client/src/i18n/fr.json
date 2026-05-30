@@ -22,6 +22,9 @@
   "classes": {
     "title": "Cours de Fitness",
     "noClasses": "Aucun cours disponible",
+    "upcoming": "À venir",
+    "pastClasses": "Cours passés",
+    "noPastClasses": "Aucun cours passé",
     "book": "Réserver",
     "joinWaitlist": "Liste d'attente",
     "cancel": "Annuler la Réservation",

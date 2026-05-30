@@ -11,9 +11,10 @@ import { bookingsApi } from '../api/bookings';
 export function ClassesPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { classes, isLoading, error, refetch } = useClasses();
+  const [classView, setClassView] = useState<'upcoming' | 'past'>('upcoming');
+  const [displayView, setDisplayView] = useState<'list' | 'calendar'>('list');
+  const { classes, isLoading, error, refetch } = useClasses(classView);
   const { book, cancel, isLoading: isBookingLoading } = useBooking();
-  const [view, setView] = useState<'list' | 'calendar'>('list');
   const [userBookings, setUserBookings] = useState<Record<string, { id: string; status: 'confirmed' | 'waitlisted' | 'cancelled' }>>({});
 
   React.useEffect(() => {
@@ -57,12 +58,33 @@ export function ClassesPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t.classes.title}</h1>
         <div className="flex gap-2">
-          <button onClick={() => setView('list')} className={`px-3 py-1 text-sm rounded ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>List</button>
-          <button onClick={() => setView('calendar')} className={`px-3 py-1 text-sm rounded ${view === 'calendar' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>Calendar</button>
+          {/* Upcoming / Past toggle */}
+          <div className="flex rounded border border-gray-300 overflow-hidden">
+            <button
+              onClick={() => setClassView('upcoming')}
+              className={`px-3 py-1 text-sm ${classView === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              {t.classes.upcoming}
+            </button>
+            <button
+              onClick={() => setClassView('past')}
+              className={`px-3 py-1 text-sm border-l border-gray-300 ${classView === 'past' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              {t.classes.pastClasses}
+            </button>
+          </div>
+
+          {/* List / Calendar toggle — only for upcoming */}
+          {classView === 'upcoming' && (
+            <div className="flex gap-1">
+              <button onClick={() => setDisplayView('list')} className={`px-3 py-1 text-sm rounded ${displayView === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>List</button>
+              <button onClick={() => setDisplayView('calendar')} className={`px-3 py-1 text-sm rounded ${displayView === 'calendar' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>Calendar</button>
+            </div>
+          )}
         </div>
       </div>
 
-      {view === 'calendar' ? (
+      {classView === 'upcoming' && displayView === 'calendar' ? (
         <CalendarView
           classes={classes}
           onClassClick={(cls: FitnessClass) => {
@@ -74,15 +96,17 @@ export function ClassesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {classes.length === 0 ? (
-            <p className="text-gray-500 col-span-full text-center">{t.classes.noClasses}</p>
+            <p className="text-gray-500 col-span-full text-center">
+              {classView === 'past' ? t.classes.noPastClasses : t.classes.noClasses}
+            </p>
           ) : (
             classes.map(cls => (
               <ClassCard
                 key={cls.id}
                 fitnessClass={cls}
-                userBookingStatus={userBookings[cls.id]?.status}
-                onBook={() => handleBook(cls.id)}
-                onCancel={() => handleCancel(cls.id)}
+                userBookingStatus={classView === 'upcoming' ? userBookings[cls.id]?.status : undefined}
+                onBook={classView === 'upcoming' ? () => handleBook(cls.id) : undefined}
+                onCancel={classView === 'upcoming' ? () => handleCancel(cls.id) : undefined}
                 isBookingLoading={isBookingLoading}
               />
             ))

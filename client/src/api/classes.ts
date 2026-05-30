@@ -29,7 +29,8 @@ export interface CreateClassData {
 }
 
 export const classesApi = {
-  getAll: () => apiClient.get<{ classes: FitnessClass[] }>('/classes'),
+  getAll: (view: 'upcoming' | 'past' = 'upcoming') =>
+    apiClient.get<{ classes: FitnessClass[] }>('/classes', { params: { view } }),
   getById: (id: string) => apiClient.get<{ class: FitnessClass }>(`/classes/${id}`),
   create: (data: CreateClassData) => apiClient.post<{ class: FitnessClass }>('/classes', data),
   update: (id: string, data: Partial<CreateClassData>) =>

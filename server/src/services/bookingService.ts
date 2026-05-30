@@ -20,6 +20,7 @@ export async function createBooking(userId: string, classId: string) {
   });
   if (!fitnessClass) throw new NotFoundError('Class not found');
   if (fitnessClass.status === 'cancelled') throw new ConflictError('Class is cancelled');
+  if (fitnessClass.startTime < new Date()) throw new ConflictError('Cannot book a class that has already started');
 
   // Check duplicate booking
   const existing = await prisma.booking.findFirst({

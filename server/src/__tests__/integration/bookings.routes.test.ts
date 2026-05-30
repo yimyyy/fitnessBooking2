@@ -49,6 +49,18 @@ describe('Bookings routes', () => {
       expect(res.status).toBe(403);
     });
 
+    it('returns 409 when booking a past class', async () => {
+      const pastClass = { ...mockClass, startTime: new Date(Date.now() - 3600000) };
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(pastClass);
+
+      const res = await request(app)
+        .post('/api/v1/bookings')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .send({ classId: 'class-1' });
+      expect(res.status).toBe(409);
+      expect(res.body.message).toMatch(/already started/);
+    });
+
     it('returns 201 confirmed when spots available', async () => {
       (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);
       (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
@@ -85,6 +97,19 @@ describe('Bookings routes', () => {
   });
 
   describe('DELETE /api/v1/bookings/:id', () => {
+    it('returns 403 with message when cancelling within the window', async () => {
+      (mockPrisma.booking.findUnique as jest.Mock).mockResolvedValue({
+        id: 'b-1', userId: 'user-1', classId: 'class-1', status: 'confirmed',
+        user: mockUser, class: { ...mockClass, startTime: new Date(Date.now() + 1 * 3600000) },
+      });
+
+      const res = await request(app)
+        .delete('/api/v1/bookings/b-1')
+        .set('Authorization', `Bearer ${makeToken()}`);
+      expect(res.status).toBe(403);
+      expect(res.body.message).toMatch(/hours before class/);
+    });
+
     it('returns 204 on cancel', async () => {
       (mockPrisma.booking.findUnique as jest.Mock).mockResolvedValue({
         id: 'b-1', userId: 'user-1', classId: 'class-1', status: 'confirmed',

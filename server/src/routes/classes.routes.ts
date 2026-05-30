@@ -21,7 +21,11 @@ const createClassSchema = z.object({
 
 classesRouter.get('/', async (req, res, next) => {
   try {
-    const classes = await getClasses();
+    const now = new Date();
+    const isPast = req.query.view === 'past';
+    const classes = await getClasses(
+      isPast ? { to: now, orderDesc: true } : { from: now }
+    );
     res.json({ classes });
   } catch (err) {
     next(err);
