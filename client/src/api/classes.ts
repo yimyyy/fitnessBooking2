@@ -26,6 +26,7 @@ export interface CreateClassData {
   location: string;
   isRecurring?: boolean;
   recurrenceRule?: string;
+  recurrenceEndDate?: string;
 }
 
 export const classesApi = {

@@ -90,7 +90,8 @@
     "required": "Ce champ est requis",
     "invalidDate": "Date invalide",
     "recurring": "Cours récurrent",
-    "recurringDays": "Répéter le"
+    "recurringDays": "Répéter le",
+    "recurrenceEndDate": "Date de fin (optionnel)"
   },
   "errors": {
     "notFound": "Non trouvé",

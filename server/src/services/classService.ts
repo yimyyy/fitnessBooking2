@@ -13,6 +13,7 @@ interface CreateClassInput {
   location: string;
   isRecurring?: boolean;
   recurrenceRule?: string;
+  recurrenceEndDate?: Date;
   parentClassId?: string;
 }
 

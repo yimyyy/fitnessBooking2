@@ -55,9 +55,10 @@ model Class {
   capacity        Int
   price           Float
   location        String
-  isRecurring     Boolean     @default(false)
-  recurrenceRule  String?
-  parentClassId   String?
+  isRecurring        Boolean     @default(false)
+  recurrenceRule     String?
+  recurrenceEndDate  DateTime?
+  parentClassId      String?
   status          ClassStatus @default(upcoming)
   createdAt       DateTime    @default(now())
   bookings        Booking[]

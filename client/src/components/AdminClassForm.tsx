@@ -43,6 +43,7 @@ type FormState = {
   location: string;
   isRecurring: boolean;
   recurrenceRule: string;
+  recurrenceEndDate: string;
 };
 
 function toLocalInput(iso: string | undefined): string {
@@ -69,6 +70,7 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
     location: initial?.location || '',
     isRecurring: initial?.isRecurring || false,
     recurrenceRule: initial?.recurrenceRule || '',
+    recurrenceEndDate: initial?.recurrenceEndDate ? initial.recurrenceEndDate.slice(0, 10) : '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -100,6 +102,7 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
       location: form.location,
       isRecurring: form.isRecurring,
       recurrenceRule: form.recurrenceRule || undefined,
+      recurrenceEndDate: form.recurrenceEndDate ? form.recurrenceEndDate + 'T00:00:00Z' : undefined,
     });
   };
 
@@ -203,26 +206,37 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
         </label>
 
         {form.isRecurring && (
-          <div>
-            <p className="text-sm text-gray-600 mb-2">{t.form.recurringDays}</p>
-            <div className="flex gap-2 flex-wrap">
-              {DAYS.map(day => {
-                const active = selectedDays.includes(day.key);
-                return (
-                  <button
-                    key={day.key}
-                    type="button"
-                    onClick={() => toggleDay(day.key)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                      active
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
-                    }`}
-                  >
-                    {day.label}
-                  </button>
-                );
-              })}
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">{t.form.recurringDays}</p>
+              <div className="flex gap-2 flex-wrap">
+                {DAYS.map(day => {
+                  const active = selectedDays.includes(day.key);
+                  return (
+                    <button
+                      key={day.key}
+                      type="button"
+                      onClick={() => toggleDay(day.key)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                        active
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t.form.recurrenceEndDate}</label>
+              <input
+                type="date"
+                value={form.recurrenceEndDate}
+                onChange={e => setForm({ ...form, recurrenceEndDate: e.target.value })}
+                className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
         )}

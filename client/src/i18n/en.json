@@ -90,7 +90,8 @@
     "required": "This field is required",
     "invalidDate": "Invalid date",
     "recurring": "Recurring class",
-    "recurringDays": "Repeat on"
+    "recurringDays": "Repeat on",
+    "recurrenceEndDate": "End date (optional)"
   },
   "errors": {
     "notFound": "Not found",

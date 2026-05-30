@@ -14,8 +14,6 @@ build/
 server/.env
 client/.env
 
-# Prisma
-server/prisma/migrations/
 
 # Test coverage
 coverage/

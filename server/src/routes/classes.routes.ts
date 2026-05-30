@@ -16,6 +16,7 @@ const createClassSchema = z.object({
   location: z.string().min(1),
   isRecurring: z.boolean().optional(),
   recurrenceRule: z.string().optional(),
+  recurrenceEndDate: z.string().datetime().optional(),
   parentClassId: z.string().optional(),
 });
 
@@ -43,11 +44,12 @@ classesRouter.get('/:id', async (req, res, next) => {
 
 classesRouter.post('/', authenticate, requireRole('admin', 'instructor'), async (req: AuthRequest, res, next) => {
   try {
-    const data = createClassSchema.parse(req.body);
+    const { startTime, endTime, recurrenceEndDate, ...rest } = createClassSchema.parse(req.body);
     const cls = await createClass({
-      ...data,
-      startTime: new Date(data.startTime),
-      endTime: new Date(data.endTime),
+      ...rest,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+      ...(recurrenceEndDate && { recurrenceEndDate: new Date(recurrenceEndDate) }),
     });
     res.status(201).json({ class: cls });
   } catch (err) {
@@ -58,11 +60,12 @@ classesRouter.post('/', authenticate, requireRole('admin', 'instructor'), async 
 classesRouter.put('/:id', authenticate, requireRole('admin', 'instructor'), async (req, res, next) => {
   try {
     const data = createClassSchema.partial().parse(req.body);
-    const { startTime, endTime, ...rest } = data;
+    const { startTime, endTime, recurrenceEndDate, ...rest } = data;
     const updated = await updateClass(String(req.params.id), {
       ...rest,
       ...(startTime && { startTime: new Date(startTime) }),
       ...(endTime && { endTime: new Date(endTime) }),
+      ...(recurrenceEndDate && { recurrenceEndDate: new Date(recurrenceEndDate) }),
     });
     res.json({ class: updated });
   } catch (err) {
