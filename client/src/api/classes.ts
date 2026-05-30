@@ -37,4 +37,5 @@ export const classesApi = {
   update: (id: string, data: Partial<CreateClassData>) =>
     apiClient.put<{ class: FitnessClass }>(`/classes/${id}`, data),
   delete: (id: string) => apiClient.delete(`/classes/${id}`),
+  cancel: (id: string) => apiClient.patch<{ class: FitnessClass }>(`/classes/${id}/cancel`),
 };

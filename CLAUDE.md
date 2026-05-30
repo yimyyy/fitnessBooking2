@@ -29,9 +29,10 @@
 ## Classes
 - `GET /api/v1/classes` — public; returns upcoming classes (startTime ≥ now) by default; `?view=past` returns past classes ordered newest first
 - `GET /api/v1/classes/:id` — public, returns a single class with bookings
-- `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional), recurrenceRule (optional), recurrenceEndDate (optional ISO datetime), parentClassId (optional)
+- `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional boolean), recurrenceRule (optional string, e.g. `"MO,WE,FR"`), recurrenceEndDate (optional ISO datetime — date only on the client, stored as `T00:00:00Z`), parentClassId (optional)
 - `PUT /api/v1/classes/:id` — admin or instructor only; any subset of the above fields
 - `DELETE /api/v1/classes/:id` — admin only
+- `PATCH /api/v1/classes/:id/cancel` — admin only; sets class status to `cancelled`
 - Class status is one of: `upcoming`, `full`, `cancelled`
 - Status is automatically set to `full` when confirmed bookings reach capacity, and back to `upcoming` when a spot opens
 
@@ -65,6 +66,8 @@ All admin routes require admin role.
 - `GET /api/v1/admin/users/:userId/bookings` — returns all bookings for a specific user with class and instructor details
 - `GET /api/v1/admin/settings` — returns all app settings
 - `PUT /api/v1/admin/settings` — updates a single setting by `{ key, value }`; currently supported key: `cancellationWindowHours`
+- `PATCH /api/v1/admin/users/:userId/role` — updates a user's role; body: `{ role: "admin" | "instructor" | "student" }`
+- `GET /api/v1/admin/logs` — returns in-memory log entries (up to 200, newest first); each entry has `id`, `timestamp`, `type` (`"email"` or `"error"`), `message`, `details`
 
 ## Settings
 - `cancellationWindowHours` — number of hours before class start that cancellation is allowed
@@ -97,19 +100,23 @@ All admin routes require admin role.
 - Red error banner shown if cancellation is blocked (e.g. within the cancellation window)
 
 **Admin (`/admin`)**
-- Dashboard stats: total confirmed bookings, total paid revenue, total classes
-- Settings section: configurable cancellation window (hours) with save confirmation
-- Users table: name, email, role, booking count; "Manage Bookings" expands inline per user
-  - Expanded user row shows all their bookings (class, date, status, payment)
-  - Admin can book a class on behalf of the user (class selector + submit)
-  - Admin can update payment status per booking (pending/paid/refunded)
-  - Admins themselves do not have a "Manage Bookings" button
-- Classes table: title, date, capacity used, status; Edit and Delete buttons
-- Inline create/edit form for classes (with instructor selector populated from admin/instructor users):
-  - Start time: date picker + 30-minute time select (for picker; custom `<input type="time">` also shown for free entry)
-  - Duration in minutes (endTime is computed as startTime + duration before submitting)
-  - Recurring checkbox; when checked shows day-of-week pills and an optional end date (date only)
-  - API errors are displayed in a red banner above the form
+- Sidebar navigation with five tabs: **Stats**, **Classes**, **Users**, **Settings**, **Logs**
+- **Stats tab**: dashboard cards — total confirmed bookings, total paid revenue, total classes
+- **Classes tab**: table of all classes (title, date, capacity used, status) with Edit, Cancel, and Delete buttons
+  - Cancel button hidden for already-cancelled classes; shows a confirmation dialog
+  - Inline create/edit form with instructor selector (populated from admin/instructor users):
+    - Start time: date picker + 30-minute time select + custom `<input type="time">` for free entry
+    - Duration in minutes (endTime computed as startTime + duration before submitting)
+    - Recurring checkbox; when checked shows day-of-week pills and an optional end date (date only, stored as `T00:00:00Z`)
+    - API errors displayed in a red banner above the form
+- **Users tab**: table of all users (name, email, role, booking count)
+  - Role selector + "Change Role" button per user to promote/demote (admin/instructor/student)
+  - "Manage Bookings" expands inline per user (hidden for admin users)
+    - Expanded row: all their bookings (class, date, status, payment)
+    - Admin can book a class on behalf of the user (class selector + submit)
+    - Admin can update payment status per booking (pending/paid/refunded)
+- **Settings tab**: configurable cancellation window (hours) with save confirmation
+- **Logs tab**: table of in-memory log entries (email sends and server errors); Refresh button; auto-fetches on tab activation
 
 **Login (`/login`)** — email + password; redirects to home on success
 
@@ -132,8 +139,8 @@ All admin routes require admin role.
 
 ## Tests
 - **Server** (Jest + Supertest, all mocked — no real DB needed):
-  - Integration: auth routes, classes routes (including recurrenceEndDate), bookings routes, admin routes
-  - Unit: authService, bookingService, sesEmailService, settingsService
+  - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403)
+  - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
   - Components: ClassCard, BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility), CalendarView, LanguageToggle, PaymentBadge
   - Hooks: useAuth, useClasses, useBooking

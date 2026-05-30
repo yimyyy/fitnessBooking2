@@ -50,6 +50,10 @@ export function AdminPage() {
   const [paymentValues, setPaymentValues] = useState<Record<string, string>>({});
   const [paymentFeedback, setPaymentFeedback] = useState<Record<string, string>>({});
 
+  // ── per-user role state ───────────────────────────────────────────────────
+  const [roleValues, setRoleValues] = useState<Record<string, string>>({});
+  const [roleFeedback, setRoleFeedback] = useState<Record<string, string>>({});
+
   // ── logs state ────────────────────────────────────────────────────────────
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -130,6 +134,12 @@ export function AdminPage() {
     setClasses(prev => prev.filter(c => c.id !== id));
   };
 
+  const handleCancelClass = async (id: string) => {
+    if (!confirm(t.admin.cancelClassConfirm)) return;
+    const res = await classesApi.cancel(id);
+    setClasses(prev => prev.map(c => c.id === id ? res.data.class : c));
+  };
+
   const handleToggleUser = async (userId: string) => {
     if (expandedUserId === userId) { setExpandedUserId(null); return; }
     setExpandedUserId(userId);
@@ -171,6 +181,26 @@ export function AdminPage() {
       await adminApi.updatePayment(bookingId, status);
       setPaymentFeedback(prev => ({ ...prev, [bookingId]: t.admin.paymentUpdated }));
       setTimeout(() => setPaymentFeedback(prev => ({ ...prev, [bookingId]: '' })), 3000);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleUpdateRole = async (userId: string) => {
+    const role = roleValues[userId];
+    if (!role) return;
+    try {
+      const res = await adminApi.updateUserRole(userId, role);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: res.data.user.role } : u));
+      setInstructors(prev => {
+        const updatedRole = res.data.user.role;
+        const isInstructorOrAdmin = updatedRole === 'instructor' || updatedRole === 'admin';
+        const exists = prev.some(i => i.id === userId);
+        const userName = users.find(u => u.id === userId)?.name ?? '';
+        if (isInstructorOrAdmin && !exists) return [...prev, { id: userId, name: userName }];
+        if (!isInstructorOrAdmin && exists) return prev.filter(i => i.id !== userId);
+        return prev;
+      });
+      setRoleFeedback(prev => ({ ...prev, [userId]: t.admin.roleSaved }));
+      setTimeout(() => setRoleFeedback(prev => ({ ...prev, [userId]: '' })), 3000);
     } catch (err) { console.error(err); }
   };
 
@@ -243,6 +273,9 @@ export function AdminPage() {
                 </td>
                 <td className="px-4 py-3 text-right space-x-2">
                   <button onClick={() => { setEditingClass(cls); setShowForm(false); }} className="text-blue-600 hover:underline text-sm">Edit</button>
+                  {cls.status !== 'cancelled' && (
+                    <button onClick={() => handleCancelClass(cls.id)} className="text-yellow-600 hover:underline text-sm">Cancel</button>
+                  )}
                   <button onClick={() => handleDelete(cls.id)} className="text-red-600 hover:underline text-sm">Delete</button>
                 </td>
               </tr>
@@ -274,11 +307,31 @@ export function AdminPage() {
                   <td className="px-4 py-3 font-medium">{user.name}</td>
                   <td className="px-4 py-3 text-gray-500">{user.email}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                      user.role === 'instructor' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>{user.role}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                        user.role === 'instructor' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>{user.role}</span>
+                      <select
+                        value={roleValues[user.id] ?? user.role}
+                        onChange={e => setRoleValues(prev => ({ ...prev, [user.id]: e.target.value }))}
+                        className="border border-gray-300 rounded px-1 py-0.5 text-xs focus:outline-none"
+                      >
+                        <option value="student">student</option>
+                        <option value="instructor">instructor</option>
+                        <option value="admin">admin</option>
+                      </select>
+                      <button
+                        onClick={() => handleUpdateRole(user.id)}
+                        className="text-xs px-2 py-0.5 bg-gray-700 text-white rounded hover:bg-gray-600"
+                      >
+                        {t.admin.changeRole}
+                      </button>
+                      {roleFeedback[user.id] && (
+                        <span className="text-xs text-green-600">{roleFeedback[user.id]}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{user._count.bookings}</td>
                   <td className="px-4 py-3 text-right">

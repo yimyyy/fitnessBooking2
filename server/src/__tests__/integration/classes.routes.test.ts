@@ -109,6 +109,33 @@ describe('Classes routes', () => {
     });
   });
 
+  describe('PATCH /api/v1/classes/:id/cancel', () => {
+    it('returns 200 with cancelled class for admin', async () => {
+      const cancelled = { ...mockClass, status: 'cancelled' };
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);
+      (mockPrisma.class.update as jest.Mock).mockResolvedValue(cancelled);
+      const res = await request(app)
+        .patch('/api/v1/classes/class-1/cancel')
+        .set('Authorization', `Bearer ${makeToken('admin')}`);
+      expect(res.status).toBe(200);
+      expect(res.body.class.status).toBe('cancelled');
+    });
+
+    it('returns 403 for student', async () => {
+      const res = await request(app)
+        .patch('/api/v1/classes/class-1/cancel')
+        .set('Authorization', `Bearer ${makeToken('student')}`);
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 for instructor', async () => {
+      const res = await request(app)
+        .patch('/api/v1/classes/class-1/cancel')
+        .set('Authorization', `Bearer ${makeToken('instructor')}`);
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe('DELETE /api/v1/classes/:id', () => {
     it('returns 204 for admin', async () => {
       (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);

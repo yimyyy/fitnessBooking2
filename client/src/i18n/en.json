@@ -74,7 +74,10 @@
     "selectClass": "Select a class...",
     "noBookings": "No bookings",
     "bookingCreated": "Booking created",
-    "paymentUpdated": "Payment updated"
+    "paymentUpdated": "Payment updated",
+    "cancelClassConfirm": "Are you sure you want to cancel this class?",
+    "changeRole": "Change Role",
+    "roleSaved": "Role updated"
   },
   "form": {
     "title": "Title",

@@ -36,6 +36,9 @@ export const adminApi = {
 
   getLogs: () =>
     apiClient.get<{ logs: LogEntry[] }>('/admin/logs'),
+
+  updateUserRole: (userId: string, role: string) =>
+    apiClient.patch<{ user: { id: string; name: string; email: string; role: string } }>(`/admin/users/${userId}/role`, { role }),
 };
 
 export interface LogEntry {

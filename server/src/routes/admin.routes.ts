@@ -149,6 +149,23 @@ adminRouter.patch('/bookings/:id/promote', async (req, res, next) => {
   }
 });
 
+// Update user role
+adminRouter.patch('/users/:userId/role', async (req, res, next) => {
+  try {
+    const { role } = z.object({
+      role: z.enum(['admin', 'instructor', 'student']),
+    }).parse(req.body);
+    const user = await prisma.user.update({
+      where: { id: String(req.params.userId) },
+      data: { role },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+});
+
 adminRouter.get('/logs', (_req, res) => {
   res.json({ logs: getLogs() });
 });

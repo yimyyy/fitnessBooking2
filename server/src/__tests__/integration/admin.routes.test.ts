@@ -5,7 +5,7 @@ import { prisma } from '../../prisma/client';
 
 jest.mock('../../prisma/client', () => ({
   prisma: {
-    user: { findMany: jest.fn() },
+    user: { findMany: jest.fn(), update: jest.fn() },
     class: { findUnique: jest.fn(), update: jest.fn(), count: jest.fn() },
     booking: {
       findFirst: jest.fn(), count: jest.fn(), create: jest.fn(),
@@ -120,6 +120,37 @@ describe('Admin routes', () => {
         .send({ paymentStatus: 'paid' });
       expect(res.status).toBe(200);
       expect(res.body.booking.paymentStatus).toBe('paid');
+    });
+  });
+
+  describe('PATCH /api/v1/admin/users/:userId/role', () => {
+    it('returns 200 and updated user for admin', async () => {
+      (mockPrisma.user.update as jest.Mock).mockResolvedValue({
+        id: 'user-1', name: 'Alice', email: 'alice@test.com', role: 'instructor',
+      });
+
+      const res = await request(app)
+        .patch('/api/v1/admin/users/user-1/role')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .send({ role: 'instructor' });
+      expect(res.status).toBe(200);
+      expect(res.body.user.role).toBe('instructor');
+    });
+
+    it('returns 400 for an invalid role', async () => {
+      const res = await request(app)
+        .patch('/api/v1/admin/users/user-1/role')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .send({ role: 'superuser' });
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 403 for non-admin', async () => {
+      const res = await request(app)
+        .patch('/api/v1/admin/users/user-1/role')
+        .set('Authorization', `Bearer ${makeToken('student', 'user-1')}`)
+        .send({ role: 'instructor' });
+      expect(res.status).toBe(403);
     });
   });
 });

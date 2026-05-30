@@ -74,7 +74,10 @@
     "selectClass": "Sélectionner un cours...",
     "noBookings": "Aucune réservation",
     "bookingCreated": "Réservation créée",
-    "paymentUpdated": "Paiement mis à jour"
+    "paymentUpdated": "Paiement mis à jour",
+    "cancelClassConfirm": "Êtes-vous sûr de vouloir annuler ce cours?",
+    "changeRole": "Changer le Rôle",
+    "roleSaved": "Rôle mis à jour"
   },
   "form": {
     "title": "Titre",

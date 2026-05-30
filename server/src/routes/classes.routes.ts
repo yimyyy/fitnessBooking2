@@ -81,3 +81,12 @@ classesRouter.delete('/:id', authenticate, requireRole('admin'), async (req, res
     next(err);
   }
 });
+
+classesRouter.patch('/:id/cancel', authenticate, requireRole('admin'), async (req, res, next) => {
+  try {
+    const updated = await updateClass(String(req.params.id), { status: 'cancelled' });
+    res.json({ class: updated });
+  } catch (err) {
+    next(err);
+  }
+});
