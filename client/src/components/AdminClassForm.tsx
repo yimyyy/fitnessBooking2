@@ -9,6 +9,19 @@ interface Props {
   instructors: { id: string; name: string }[];
 }
 
+// 30-minute time slots for the picker: "00:00", "00:30", … "23:30"
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2).toString().padStart(2, '0');
+  const m = i % 2 === 0 ? '00' : '30';
+  return `${h}:${m}`;
+});
+
+function fmt12h(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h < 12 ? 'AM' : 'PM';
+  return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
 const DAYS = [
   { key: 'MO', label: 'Mon' },
   { key: 'TU', label: 'Tue' },
@@ -131,8 +144,47 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors }: Pro
         {errors.instructorId && <p className="text-red-500 text-xs mt-1">{errors.instructorId}</p>}
       </div>
 
-      {/* step="1800" = 30-minute increments in the picker; free typing still works */}
-      {field('startTime', t.form.startTime, 'datetime-local', '1800')}
+      {/* Date + time picker: select shows only 30-min slots; custom input allows any time */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t.form.startTime}</label>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={(form.startTime || '').split('T')[0] || ''}
+            onChange={e => {
+              const time = (form.startTime || '').split('T')[1] || '09:00';
+              setForm({ ...form, startTime: e.target.value + 'T' + time });
+            }}
+            className={`flex-1 border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? 'border-red-400' : 'border-gray-300'}`}
+          />
+          <select
+            value={TIME_OPTIONS.includes((form.startTime || '').split('T')[1] || '') ? (form.startTime || '').split('T')[1] : ''}
+            onChange={e => {
+              const date = (form.startTime || '').split('T')[0] || '';
+              setForm({ ...form, startTime: date + 'T' + e.target.value });
+            }}
+            className="w-36 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Pick time…</option>
+            {TIME_OPTIONS.map(opt => (
+              <option key={opt} value={opt}>{fmt12h(opt)}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="text-xs text-gray-400">Custom time:</span>
+          <input
+            type="time"
+            value={(form.startTime || '').split('T')[1] || ''}
+            onChange={e => {
+              const date = (form.startTime || '').split('T')[0] || '';
+              setForm({ ...form, startTime: date + 'T' + e.target.value });
+            }}
+            className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {errors.startTime && <p className="text-red-500 text-xs mt-1">{errors.startTime}</p>}
+      </div>
       {field('duration', t.form.duration, 'number')}
       {field('capacity', t.form.capacity, 'number')}
       {field('price', t.form.price, 'number')}
