@@ -50,6 +50,14 @@ export function ClassesPage() {
     }
   };
 
+  const displayClasses =
+    user && user.role !== 'admin' && classView === 'past'
+      ? classes.filter(cls => {
+          const b = userBookings[cls.id];
+          return b && b.status !== 'cancelled';
+        })
+      : classes;
+
   if (isLoading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
 
@@ -95,12 +103,12 @@ export function ClassesPage() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classes.length === 0 ? (
+          {displayClasses.length === 0 ? (
             <p className="text-gray-500 col-span-full text-center">
               {classView === 'past' ? t.classes.noPastClasses : t.classes.noClasses}
             </p>
           ) : (
-            classes.map(cls => (
+            displayClasses.map(cls => (
               <ClassCard
                 key={cls.id}
                 fitnessClass={cls}

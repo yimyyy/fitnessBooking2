@@ -59,6 +59,9 @@ export function AdminPage() {
   const [roleValues, setRoleValues] = useState<Record<string, string>>({});
   const [roleFeedback, setRoleFeedback] = useState<Record<string, string>>({});
 
+  // ── user search state ─────────────────────────────────────────────────────
+  const [userSearch, setUserSearch] = useState('');
+
   // ── logs state ────────────────────────────────────────────────────────────
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -316,9 +319,24 @@ export function AdminPage() {
     </div>
   );
 
-  const renderUsers = () => (
+  const renderUsers = () => {
+    const q = userSearch.toLowerCase();
+    const filteredUsers = q
+      ? users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+      : users;
+    return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-900">{t.admin.users}</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900">{t.admin.users}</h2>
+        <input
+          type="text"
+          placeholder="Search by name or email…"
+          value={userSearch}
+          onChange={e => setUserSearch(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Search users"
+        />
+      </div>
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -331,7 +349,7 @@ export function AdminPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {filteredUsers.map(user => (
               <React.Fragment key={user.id}>
                 <tr className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{user.name}</td>
@@ -458,7 +476,8 @@ export function AdminPage() {
         </table>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderSettings = () => (
     <div className="space-y-6">

@@ -19,6 +19,7 @@ adminRouter.get('/users', async (_req, res, next) => {
         id: true, name: true, email: true, role: true, language: true, createdAt: true,
         _count: { select: { bookings: true } },
       },
+      orderBy: { name: 'asc' },
     });
     res.json({ users });
   } catch (err) {
