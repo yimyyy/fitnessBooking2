@@ -41,6 +41,8 @@
   "bookings": {
     "myBookings": "My Bookings",
     "noBookings": "No bookings yet",
+    "upcoming": "Upcoming",
+    "past": "Past",
     "confirmed": "Confirmed",
     "waitlisted": "Waitlisted",
     "cancelled": "Cancelled",
@@ -49,7 +51,9 @@
     "paymentRefunded": "Refunded",
     "cancelBooking": "Cancel Booking",
     "cancelConfirm": "Are you sure you want to cancel this booking?",
-    "cancelError": "Could not cancel booking"
+    "cancelError": "Could not cancel booking",
+    "noPastBookings": "No past bookings",
+    "noCancelledBookings": "No cancelled bookings"
   },
   "admin": {
     "dashboard": "Admin Dashboard",

@@ -6,10 +6,17 @@ import type { Booking } from '../api/bookings';
 import { PaymentBadge } from '../components/PaymentBadge';
 import { useBooking } from '../hooks/useBooking';
 
+type TabId = 'upcoming' | 'past' | 'cancelled';
+
+function isPast(b: Booking): boolean {
+  return !!b.class && new Date(b.class.startTime) < new Date();
+}
+
 export function BookingsPage() {
   const { t } = useLanguage();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<TabId>('upcoming');
   const { cancel, isLoading: isCancelling, error: cancelError, setError: setCancelError } = useBooking();
 
   useEffect(() => {
@@ -25,21 +32,52 @@ export function BookingsPage() {
     if (ok) setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'cancelled' } : b));
   };
 
+  const upcomingBookings = bookings.filter(b => (b.status === 'confirmed' || b.status === 'waitlisted') && !isPast(b));
+  const pastBookings = bookings.filter(b => (b.status === 'confirmed' || b.status === 'waitlisted') && isPast(b));
+  const cancelledBookings = bookings.filter(b => b.status === 'cancelled');
+
+  const displayed =
+    tab === 'upcoming' ? upcomingBookings :
+    tab === 'past'     ? pastBookings :
+                         cancelledBookings;
+
+  const emptyMsg =
+    tab === 'upcoming' ? t.bookings.noBookings :
+    tab === 'past'     ? t.bookings.noPastBookings :
+                         t.bookings.noCancelledBookings;
+
   if (isLoading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t.bookings.myBookings}</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">{t.bookings.myBookings}</h1>
+        <div className="flex rounded border border-gray-300 overflow-hidden">
+          {(['upcoming', 'past', 'cancelled'] as TabId[]).map(id => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`px-3 py-1 text-sm border-l first:border-l-0 border-gray-300 ${
+                tab === id ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {t.bookings[id]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {cancelError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
           {cancelError}
         </div>
       )}
-      {bookings.length === 0 ? (
-        <p className="text-gray-500 text-center">{t.bookings.noBookings}</p>
+
+      {displayed.length === 0 ? (
+        <p className="text-gray-500 text-center">{emptyMsg}</p>
       ) : (
         <div className="space-y-4">
-          {bookings.map(b => (
+          {displayed.map(b => (
             <div key={b.id} className="bg-white rounded-lg shadow p-5 flex justify-between items-start">
               <div>
                 <h3 className="font-semibold text-gray-900">{b.class?.title || 'Class'}</h3>
@@ -56,7 +94,7 @@ export function BookingsPage() {
                   <PaymentBadge status={b.paymentStatus} />
                 </div>
               </div>
-              {b.status !== 'cancelled' && (
+              {tab === 'upcoming' && (
                 <button
                   onClick={() => handleCancel(b)}
                   disabled={isCancelling}

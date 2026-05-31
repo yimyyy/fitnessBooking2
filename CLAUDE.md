@@ -107,8 +107,10 @@ All admin routes require admin role.
 - Unauthenticated users see the class list but cannot book
 
 **My Bookings (`/bookings`)**
-- Lists the current user's bookings with class details, booking status badge, payment status badge
-- Cancel button shown for non-cancelled bookings
+- Three tabs: **Upcoming** (default), **Past**, **Cancelled**
+- Upcoming: confirmed and waitlisted bookings for classes that haven't started yet — Cancel Booking button shown
+- Past: confirmed and waitlisted bookings for classes that have already happened — no cancel button
+- Cancelled: bookings with cancelled status — no cancel button
 - Red error banner shown if cancellation is blocked (e.g. within the cancellation window)
 
 **Admin (`/admin`)**
@@ -158,7 +160,7 @@ All admin routes require admin role.
   - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403; GET/POST/DELETE locations — auth and validation)
   - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options, start date defaults to today, recurrenceEndDate defaults to 3 months from start), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent), AdminUsers (search by name, search by email, clear search, no results), ClassesPagePast (student sees only attended classes, admin sees all, unauthenticated sees all)
+  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options, start date defaults to today, recurrenceEndDate defaults to 3 months from start), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent), AdminUsers (search by name, search by email, clear search, no results), ClassesPagePast (student sees only attended classes, admin sees all, unauthenticated sees all), BookingsPage (upcoming tab default, past tab no cancel, cancelled tab, empty states)
   - Hooks: useAuth, useClasses, useBooking
 - **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
   - `auth.cy.ts` — login, register, protected route redirects

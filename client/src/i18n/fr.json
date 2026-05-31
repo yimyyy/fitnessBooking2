@@ -41,6 +41,8 @@
   "bookings": {
     "myBookings": "Mes Réservations",
     "noBookings": "Aucune réservation",
+    "upcoming": "À venir",
+    "past": "Passées",
     "confirmed": "Confirmée",
     "waitlisted": "Liste d'attente",
     "cancelled": "Annulée",
@@ -49,7 +51,9 @@
     "paymentRefunded": "Remboursé",
     "cancelBooking": "Annuler la Réservation",
     "cancelConfirm": "Êtes-vous sûr de vouloir annuler cette réservation?",
-    "cancelError": "Impossible d'annuler la réservation"
+    "cancelError": "Impossible d'annuler la réservation",
+    "noPastBookings": "Aucune réservation passée",
+    "noCancelledBookings": "Aucune réservation annulée"
   },
   "admin": {
     "dashboard": "Tableau de Bord",
