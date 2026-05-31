@@ -59,6 +59,15 @@ describe('Classes routes', () => {
         })
       );
     });
+
+    it('returns all classes with no time filter when view=all', async () => {
+      (mockPrisma.class.findMany as jest.Mock).mockResolvedValue([mockClass]);
+      const res = await request(app).get('/api/v1/classes?view=all');
+      expect(res.status).toBe(200);
+      expect(mockPrisma.class.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} })
+      );
+    });
   });
 
   describe('POST /api/v1/classes', () => {

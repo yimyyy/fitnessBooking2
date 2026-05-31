@@ -69,6 +69,13 @@ describe('AdminClassForm', () => {
     expect(durationMs).toBe(90 * 60 * 1000);
   });
 
+  it('defaults start date to today when no initial value provided', () => {
+    render(<AdminClassForm onSubmit={vi.fn()} onCancel={vi.fn()} instructors={instructors} locations={locations} />, { wrapper });
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+    const today = new Date().toISOString().slice(0, 10);
+    expect(dateInput.value).toBe(today);
+  });
+
   it('hides recurrence end date when recurring is unchecked', () => {
     render(<AdminClassForm onSubmit={vi.fn()} onCancel={vi.fn()} instructors={instructors} locations={locations} />, { wrapper });
     expect(screen.queryByText('End date (optional)')).not.toBeInTheDocument();
@@ -78,6 +85,24 @@ describe('AdminClassForm', () => {
     render(<AdminClassForm onSubmit={vi.fn()} onCancel={vi.fn()} instructors={instructors} locations={locations} />, { wrapper });
     fireEvent.click(screen.getByRole('checkbox'));
     expect(screen.getByText('End date (optional)')).toBeInTheDocument();
+  });
+
+  it('auto-fills recurrenceEndDate to 3 months from start when recurring toggled on', () => {
+    render(
+      <AdminClassForm
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        instructors={instructors}
+        locations={locations}
+        initial={{ startTime: '2026-06-01T09:00:00.000Z' }}
+      />,
+      { wrapper }
+    );
+    fireEvent.click(screen.getByRole('checkbox'));
+    // recurrenceEndDate input appears — should be 2026-09-01
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    const endDateInput = dateInputs[dateInputs.length - 1] as HTMLInputElement;
+    expect(endDateInput.value).toBe('2026-09-01');
   });
 
   it('pre-fills duration from initial startTime and endTime', () => {

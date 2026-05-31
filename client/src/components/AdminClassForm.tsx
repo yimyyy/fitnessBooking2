@@ -58,13 +58,25 @@ function computeDuration(start: string | undefined, end: string | undefined): nu
   return Math.max(1, Math.round(ms / 60000));
 }
 
+function todayDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function threeMonthsFrom(startTime: string): string {
+  const datePart = (startTime || '').split('T')[0];
+  if (!datePart) return '';
+  const d = new Date(datePart);
+  d.setMonth(d.getMonth() + 3);
+  return d.toISOString().slice(0, 10);
+}
+
 export function AdminClassForm({ onSubmit, onCancel, initial, instructors, locations }: Props) {
   const { t } = useLanguage();
   const [form, setForm] = useState<FormState>({
     title: initial?.title || '',
     description: initial?.description || '',
     instructorId: initial?.instructorId || '',
-    startTime: toLocalInput(initial?.startTime),
+    startTime: initial?.startTime ? toLocalInput(initial.startTime) : todayDate(),
     duration: computeDuration(initial?.startTime, initial?.endTime),
     capacity: initial?.capacity || 10,
     price: initial?.price || 0,
@@ -212,7 +224,17 @@ export function AdminClassForm({ onSubmit, onCancel, initial, instructors, locat
           <input
             type="checkbox"
             checked={!!form.isRecurring}
-            onChange={e => setForm({ ...form, isRecurring: e.target.checked, recurrenceRule: e.target.checked ? form.recurrenceRule : '' })}
+            onChange={e => {
+              const checked = e.target.checked;
+              setForm({
+                ...form,
+                isRecurring: checked,
+                recurrenceRule: checked ? form.recurrenceRule : '',
+                recurrenceEndDate: checked && !form.recurrenceEndDate
+                  ? threeMonthsFrom(form.startTime)
+                  : form.recurrenceEndDate,
+              });
+            }}
             className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm font-medium text-gray-700">{t.form.recurring}</span>

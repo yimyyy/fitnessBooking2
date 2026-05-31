@@ -27,7 +27,7 @@
 - On 401 response, the client clears localStorage and redirects to `/login`
 
 ## Classes
-- `GET /api/v1/classes` — public; returns upcoming classes (startTime ≥ now) by default; `?view=past` returns past classes ordered newest first
+- `GET /api/v1/classes` — public; returns upcoming classes (startTime ≥ now) by default; `?view=past` returns past classes ordered newest first; `?view=all` returns all classes with no time filter
 - `GET /api/v1/classes/:id` — public, returns a single class with bookings
 - `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional boolean), recurrenceRule (optional string, e.g. `"MO,WE,FR"`), recurrenceEndDate (optional ISO datetime — date only on the client, stored as `T00:00:00Z`), parentClassId (optional)
 - `PUT /api/v1/classes/:id` — admin or instructor only; any subset of the above fields
@@ -114,13 +114,13 @@ All admin routes require admin role.
 **Admin (`/admin`)**
 - Sidebar navigation with five tabs: **Stats**, **Classes**, **Users**, **Settings**, **Logs**
 - **Stats tab**: dashboard cards — total confirmed bookings, total paid revenue, total classes
-- **Classes tab**: table of all classes (title, date, capacity used, status) with Edit, Cancel, and Delete buttons
+- **Classes tab**: table of all classes past and upcoming (title, date, capacity used, status) with Edit, Cancel, and Delete buttons
   - Cancel button hidden for already-cancelled classes; shows a confirmation dialog
   - Inline create/edit form with instructor selector (populated from admin/instructor users):
-    - Start time: date picker + 30-minute time select + custom `<input type="time">` for free entry
+    - Start time: date picker + 30-minute time select + custom `<input type="time">` for free entry; defaults to today
     - Duration in minutes (endTime computed as startTime + duration before submitting)
     - Location: dropdown populated from the admin-managed locations list
-    - Recurring checkbox; when checked shows day-of-week pills and an optional end date (date only, stored as `T00:00:00Z`)
+    - Recurring checkbox; when checked shows day-of-week pills and an end date picker (date only, stored as `T00:00:00Z`) that defaults to 3 months from the start date
     - API errors displayed in a red banner above the form
 - **Users tab**: table of all users (name, email, role, booking count)
   - Role selector + "Change Role" button per user to promote/demote (admin/instructor/student)
@@ -158,7 +158,7 @@ All admin routes require admin role.
   - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403; GET/POST/DELETE locations — auth and validation)
   - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
+  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options, start date defaults to today, recurrenceEndDate defaults to 3 months from start), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent)
   - Hooks: useAuth, useClasses, useBooking
 - **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
   - `auth.cy.ts` — login, register, protected route redirects

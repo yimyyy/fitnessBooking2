@@ -30,7 +30,7 @@ export interface CreateClassData {
 }
 
 export const classesApi = {
-  getAll: (view: 'upcoming' | 'past' = 'upcoming') =>
+  getAll: (view: 'upcoming' | 'past' | 'all' = 'upcoming') =>
     apiClient.get<{ classes: FitnessClass[] }>('/classes', { params: { view } }),
   getById: (id: string) => apiClient.get<{ class: FitnessClass }>(`/classes/${id}`),
   create: (data: CreateClassData) => apiClient.post<{ class: FitnessClass }>('/classes', data),

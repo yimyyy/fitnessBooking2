@@ -69,7 +69,7 @@ export function AdminPage() {
   useEffect(() => {
     Promise.all([
       apiClient.get('/admin/stats'),
-      classesApi.getAll(),
+      classesApi.getAll('all'),
       apiClient.get('/admin/users'),
       adminApi.getSettings(),
       adminApi.getLocations(),
@@ -172,7 +172,7 @@ export function AdminPage() {
       setTimeout(() => setBookingFeedback(prev => ({ ...prev, [userId]: '' })), 3000);
       const [bookingsRes, classesRes] = await Promise.all([
         adminApi.getUserBookings(userId),
-        classesApi.getAll(),
+        classesApi.getAll('all'),
       ]);
       setUserBookings(prev => ({ ...prev, [userId]: bookingsRes.data.bookings }));
       setClasses(classesRes.data.classes);
@@ -384,7 +384,7 @@ export function AdminPage() {
                           className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">{t.admin.selectClass}</option>
-                          {classes.filter(c => c.status !== 'cancelled').map(c => (
+                          {classes.filter(c => c.status !== 'cancelled' && new Date(c.startTime) >= new Date()).map(c => (
                             <option key={c.id} value={c.id}>{c.title} — {new Date(c.startTime).toLocaleDateString()}</option>
                           ))}
                         </select>
