@@ -133,7 +133,7 @@ All admin routes require admin role.
     - Expanded row: all their bookings (class, date, status, payment)
     - Admin can book a class on behalf of the user (class selector + submit)
     - Admin can update payment status per booking (pending/paid/refunded)
-- **Settings tab**: configurable cancellation window (hours) with save confirmation; location management — add new locations (name input + Add button) and remove existing ones; locations are stored in the database and populate the class creation form dropdown
+- **Settings tab**: configurable cancellation window (hours) and booking window (days) with save confirmation; location management — add new locations (name input + Add button) and remove existing ones; locations are stored in the database and populate the class creation form dropdown
 - **Logs tab**: table of in-memory log entries (email sends and server errors); Refresh button; auto-fetches on tab activation
   - Type filter pills (All / Email / Error) with per-type count badges; active pill is colour-coded
   - Each row shows: timestamp, type badge, message; Details button appears only when a `details` field exists
