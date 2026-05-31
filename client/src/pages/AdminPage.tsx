@@ -35,6 +35,7 @@ export function AdminPage() {
   const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [cancellationWindow, setCancellationWindow] = useState('24');
+  const [bookingWindow, setBookingWindow] = useState('7');
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -87,6 +88,7 @@ export function AdminPage() {
           .map((u) => ({ id: u.id, name: u.name }))
       );
       setCancellationWindow(settingsRes.data.settings.cancellationWindowHours ?? '24');
+      setBookingWindow(settingsRes.data.settings.bookingWindowDays ?? '7');
       setLocations(locationsRes.data.locations);
     }).catch(console.error);
   }, []);
@@ -110,7 +112,10 @@ export function AdminPage() {
   // ── handlers ──────────────────────────────────────────────────────────────
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await adminApi.updateSetting('cancellationWindowHours', cancellationWindow);
+    await Promise.all([
+      adminApi.updateSetting('cancellationWindowHours', cancellationWindow),
+      adminApi.updateSetting('bookingWindowDays', bookingWindow),
+    ]);
     setSettingsSaved(true);
     setTimeout(() => setSettingsSaved(false), 3000);
   };
@@ -483,22 +488,39 @@ export function AdminPage() {
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">{t.admin.settings}</h2>
 
-      {/* Cancellation window */}
+      {/* Timing settings */}
       <div className="bg-white rounded-lg shadow p-6">
-        <form onSubmit={handleSaveSettings} className="flex items-end gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.cancellationWindow}</label>
-            <p className="text-xs text-gray-500 mb-2">{t.admin.cancellationWindowHelp}</p>
-            <input
-              type="number"
-              min="0"
-              value={cancellationWindow}
-              onChange={e => setCancellationWindow(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <form onSubmit={handleSaveSettings} className="space-y-4">
+          <div className="flex items-end gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.cancellationWindow}</label>
+              <p className="text-xs text-gray-500 mb-2">{t.admin.cancellationWindowHelp}</p>
+              <input
+                type="number"
+                min="0"
+                value={cancellationWindow}
+                onChange={e => setCancellationWindow(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t.form.save}</button>
-          {settingsSaved && <span className="text-sm text-green-600">{t.admin.settingsSaved}</span>}
+          <div className="flex items-end gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.bookingWindow}</label>
+              <p className="text-xs text-gray-500 mb-2">{t.admin.bookingWindowHelp}</p>
+              <input
+                type="number"
+                min="1"
+                value={bookingWindow}
+                onChange={e => setBookingWindow(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t.form.save}</button>
+            {settingsSaved && <span className="text-sm text-green-600">{t.admin.settingsSaved}</span>}
+          </div>
         </form>
       </div>
 

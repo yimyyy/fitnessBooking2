@@ -9,8 +9,13 @@ jest.mock('../../prisma/client', () => ({
       findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
       update: jest.fn(),
       delete: jest.fn(),
+    },
+    appSettings: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
     },
   },
 }));
@@ -115,6 +120,30 @@ describe('Classes routes', () => {
         .set('Authorization', `Bearer ${makeToken('admin')}`)
         .send({ ...classData, recurrenceEndDate: 'not-a-date' });
       expect(res.status).toBe(400);
+    });
+
+    it('generates child instances via createMany when isRecurring is true', async () => {
+      const recurringParent = {
+        ...mockClass, isRecurring: true, recurrenceRule: 'MO,WE,FR',
+        recurrenceEndDate: new Date('2027-01-31T00:00:00Z'),
+      };
+      (mockPrisma.class.create as jest.Mock).mockResolvedValue(recurringParent);
+      (mockPrisma.class.createMany as jest.Mock).mockResolvedValue({ count: 12 });
+
+      const endDate = '2027-01-31T00:00:00Z';
+      const res = await request(app)
+        .post('/api/v1/classes')
+        .set('Authorization', `Bearer ${makeToken('admin')}`)
+        .send({ ...classData, isRecurring: true, recurrenceRule: 'MO,WE,FR', recurrenceEndDate: endDate });
+
+      expect(res.status).toBe(201);
+      expect(mockPrisma.class.createMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.arrayContaining([
+            expect.objectContaining({ parentClassId: 'class-1' }),
+          ]),
+        })
+      );
     });
   });
 

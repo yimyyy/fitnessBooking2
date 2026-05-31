@@ -36,7 +36,8 @@
     "capacity": "Capacity",
     "price": "Price",
     "spotsLeft": "spots left",
-    "waitlistPosition": "Waitlist position"
+    "waitlistPosition": "Waitlist position",
+    "bookingOpens": "Booking opens"
   },
   "bookings": {
     "myBookings": "My Bookings",
@@ -86,7 +87,9 @@
     "addLocation": "Add location",
     "locationName": "Location name",
     "locationAdded": "Location added",
-    "deleteLocation": "Remove"
+    "deleteLocation": "Remove",
+    "bookingWindow": "Booking Window (days)",
+    "bookingWindowHelp": "Students can book classes this many days in advance"
   },
   "form": {
     "title": "Title",

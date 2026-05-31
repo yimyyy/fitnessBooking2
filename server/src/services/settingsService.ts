@@ -6,6 +6,7 @@ const db = prisma as any;
 
 const DEFAULTS: Record<string, string> = {
   cancellationWindowHours: process.env.CANCELLATION_WINDOW_HOURS || '24',
+  bookingWindowDays: process.env.BOOKING_WINDOW_DAYS || '7',
 };
 
 /**

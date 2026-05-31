@@ -1,6 +1,7 @@
 import { prisma } from '../prisma/client';
 import { ConflictError, NotFoundError, ForbiddenError } from '../errors/AppError';
 import { sendBookingConfirmation, sendCancellationConfirmation, sendWaitlistPromotion, sendWaitlistConfirmation } from './sesEmailService';
+import { getSetting } from './settingsService';
 
 /**
  * Books a student into a fitness class, or adds them to the waitlist if full.
@@ -21,6 +22,14 @@ export async function createBooking(userId: string, classId: string) {
   if (!fitnessClass) throw new NotFoundError('Class not found');
   if (fitnessClass.status === 'cancelled') throw new ConflictError('Class is cancelled');
   if (fitnessClass.startTime < new Date()) throw new ConflictError('Cannot book a class that has already started');
+
+  // Enforce booking window
+  const bookingWindowDays = parseFloat(await getSetting('bookingWindowDays'));
+  const msUntilClass = fitnessClass.startTime.getTime() - Date.now();
+  if (msUntilClass > bookingWindowDays * 86400000) {
+    const opensAt = new Date(fitnessClass.startTime.getTime() - bookingWindowDays * 86400000);
+    throw new ConflictError(`Booking opens on ${opensAt.toISOString().slice(0, 10)}`);
+  }
 
   // Check duplicate booking
   const existing = await prisma.booking.findFirst({

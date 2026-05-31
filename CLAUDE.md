@@ -30,6 +30,7 @@
 - `GET /api/v1/classes` — public; returns upcoming classes (startTime ≥ now) by default; `?view=past` returns past classes ordered newest first; `?view=all` returns all classes with no time filter
 - `GET /api/v1/classes/:id` — public, returns a single class with bookings
 - `POST /api/v1/classes` — admin or instructor only; fields: title, description (optional), instructorId, startTime, endTime, capacity, price, location, isRecurring (optional boolean), recurrenceRule (optional string, e.g. `"MO,WE,FR"`), recurrenceEndDate (optional ISO datetime — date only on the client, stored as `T00:00:00Z`), parentClassId (optional)
+  - When `isRecurring=true` and `recurrenceRule` + `recurrenceEndDate` are provided, the server generates individual child class records for every matching weekday from startTime+1 day through recurrenceEndDate; each child has `parentClassId` set to the parent class ID; children are independent bookable classes
 - `PUT /api/v1/classes/:id` — admin or instructor only; any subset of the above fields
 - `DELETE /api/v1/classes/:id` — admin only
 - `PATCH /api/v1/classes/:id/cancel` — admin only; sets class status to `cancelled`
@@ -40,6 +41,7 @@
 - `POST /api/v1/bookings` — authenticated; body: `{ classId }`
   - Admin role is blocked (403) — admins use the admin panel to book on behalf of users
   - Cannot book a class whose startTime is in the past (409)
+  - Cannot book if class starts more than `bookingWindowDays` days in the future (409) — responds with the date booking opens
   - If confirmed bookings < capacity → booking is `confirmed`
   - If confirmed bookings ≥ capacity → booking is `waitlisted`
   - Cannot book a cancelled class
@@ -65,7 +67,7 @@ All admin routes require admin role.
 - `POST /api/v1/admin/bookings` — body: `{ userId, classId }`; books a class on behalf of any user; admin cannot book for themselves (403)
 - `GET /api/v1/admin/users/:userId/bookings` — returns all bookings for a specific user with class and instructor details
 - `GET /api/v1/admin/settings` — returns all app settings
-- `PUT /api/v1/admin/settings` — updates a single setting by `{ key, value }`; currently supported key: `cancellationWindowHours`
+- `PUT /api/v1/admin/settings` — updates a single setting by `{ key, value }`; supported keys: `cancellationWindowHours`, `bookingWindowDays`
 - `PATCH /api/v1/admin/users/:userId/role` — updates a user's role; body: `{ role: "admin" | "instructor" | "student" }`
 - `GET /api/v1/admin/logs` — returns in-memory log entries (up to 200, newest first); each entry has `id`, `timestamp`, `type` (`"email"` or `"error"`), `message`, `details`
 - `GET /api/v1/admin/locations` — returns all locations ordered by name
@@ -73,10 +75,10 @@ All admin routes require admin role.
 - `DELETE /api/v1/admin/locations/:id` — deletes a location
 
 ## Settings
-- `cancellationWindowHours` — number of hours before class start that cancellation is allowed
-- Falls back to `CANCELLATION_WINDOW_HOURS` env var, then to `"24"` if not set
-- Stored in the `AppSettings` table in the database
-- Configurable from the admin dashboard UI
+- `cancellationWindowHours` — hours before class start within which cancellation is blocked; falls back to `CANCELLATION_WINDOW_HOURS` env var, then `"24"`
+- `bookingWindowDays` — days in advance students can book a class; falls back to `BOOKING_WINDOW_DAYS` env var, then `"7"`
+- Both stored in `AppSettings` table; configurable from the admin Settings tab
+- Public endpoint: `GET /api/v1/settings/public` — returns `{ bookingWindowDays }` (no auth required)
 
 ## Locations
 - Stored in the `Location` table (`id`, `name` unique, `createdAt`)
@@ -97,11 +99,12 @@ All admin routes require admin role.
 
 **Classes (`/classes`)**
 - Toggle between Upcoming and Past Classes views
-- Upcoming view: card or calendar layout (toggle between the two); authenticated non-admin users see Book Now / Join Waitlist / Cancel Booking button per class
-- **Join Waitlist** is shown (yellow button) when `status === 'full'` OR `spotsLeft <= 0`; clicking it sends a normal booking request which the server handles as waitlisted
-- **Book Now** is shown (blue button) when spots are available
-- **Cancel Booking** is shown (red button) when the user already has a confirmed or waitlisted booking
-- Admin users see the class list but no booking buttons (they book via the admin panel)
+- Upcoming view: card or calendar layout (toggle between the two); authenticated non-admin users see booking controls per class
+  - **Book Now** (blue) — class is within the booking window and spots are available
+  - **Join Waitlist** (yellow) — class is within the booking window and `status === 'full'` OR `spotsLeft <= 0`
+  - **Cancel Booking** (red) — user already has a confirmed or waitlisted booking
+  - **"Booking opens [date]"** (grey label) — class is visible but outside the booking window; no button shown
+- Admin users see the class list but no booking controls (they book via the admin panel)
 - Past Classes view: list only; no booking buttons shown; authenticated non-admin users see only classes they attended (confirmed or waitlisted booking); unauthenticated users and admins see all past classes
 - Each class card shows: title, instructor, date/time, location, price, capacity/spots left, status badge
 - Unauthenticated users see the class list but cannot book
@@ -157,10 +160,10 @@ All admin routes require admin role.
 
 ## Tests
 - **Server** (Jest + Supertest, all mocked — no real DB needed):
-  - Integration: auth routes, classes routes (including recurrenceEndDate, PATCH cancel — admin 200 / student+instructor 403), bookings routes, admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403; GET/POST/DELETE locations — auth and validation)
-  - Unit: authService, bookingService (including class-full and waitlist promotion), sesEmailService, settingsService
+  - Integration: auth routes, classes routes (including recurrenceEndDate, recurring instance generation via createMany, PATCH cancel — admin 200 / student+instructor 403), bookings routes (including booking window rejection), admin routes (including PATCH user role — admin 200 / invalid role 400 / non-admin 403; GET/POST/DELETE locations — auth and validation)
+  - Unit: authService, bookingService (including class-full, waitlist promotion, booking window enforcement), sesEmailService, settingsService
 - **Client** (Vitest + React Testing Library):
-  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options, start date defaults to today, recurrenceEndDate defaults to 3 months from start), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent), AdminUsers (search by name, search by email, clear search, no results), ClassesPagePast (student sees only attended classes, admin sees all, unauthenticated sees all), BookingsPage (upcoming tab default, past tab no cancel, cancelled tab, empty states)
+  - Components: ClassCard (Book Now / Join Waitlist when full or spotsLeft=0 / Cancel Booking states / bookingOpensAt label), BookingButton, AdminClassForm (validation, duration→endTime, recurrenceEndDate visibility, location dropdown options, start date defaults to today, recurrenceEndDate defaults to 3 months from start), CalendarView, LanguageToggle, PaymentBadge, AdminLogs (filter pills, Details expand/collapse, no Details button when details absent), AdminUsers (search by name, search by email, clear search, no results), ClassesPagePast (student sees only attended classes, admin sees all, unauthenticated sees all), BookingsPage (upcoming tab default, past tab no cancel, cancelled tab, empty states)
   - Hooks: useAuth, useClasses, useBooking
 - **E2E** (Cypress, runs against Vite dev server with `cy.intercept()` mocks):
   - `auth.cy.ts` — login, register, protected route redirects

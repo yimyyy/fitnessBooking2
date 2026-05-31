@@ -76,4 +76,22 @@ describe('ClassCard', () => {
     );
     expect(screen.getByRole('button', { name: 'Cancel Booking' })).toBeInTheDocument();
   });
+
+  it('shows booking opens date when bookingOpensAt is set', () => {
+    const opensAt = new Date('2026-06-25T00:00:00Z');
+    render(
+      <ClassCard fitnessClass={mockClass} isBookingLoading={false} bookingOpensAt={opensAt} />,
+      { wrapper }
+    );
+    expect(screen.getByText(/Booking opens/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Book Now' })).not.toBeInTheDocument();
+  });
+
+  it('does not show booking opens when bookingOpensAt is not set', () => {
+    render(
+      <ClassCard fitnessClass={mockClass} isBookingLoading={false} />,
+      { wrapper }
+    );
+    expect(screen.queryByText(/Booking opens/)).not.toBeInTheDocument();
+  });
 });

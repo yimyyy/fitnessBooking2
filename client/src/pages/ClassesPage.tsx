@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useClasses } from '../hooks/useClasses';
@@ -7,6 +7,7 @@ import { ClassCard } from '../components/ClassCard';
 import { CalendarView } from '../components/CalendarView';
 import type { FitnessClass } from '../api/classes';
 import { bookingsApi } from '../api/bookings';
+import { apiClient } from '../api/client';
 
 export function ClassesPage() {
   const { t } = useLanguage();
@@ -16,8 +17,15 @@ export function ClassesPage() {
   const { classes, isLoading, error, refetch } = useClasses(classView);
   const { book, cancel, isLoading: isBookingLoading } = useBooking();
   const [userBookings, setUserBookings] = useState<Record<string, { id: string; status: 'confirmed' | 'waitlisted' | 'cancelled' }>>({});
+  const [bookingWindowDays, setBookingWindowDays] = useState(7);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    apiClient.get<{ bookingWindowDays: number }>('/settings/public')
+      .then(res => setBookingWindowDays(res.data.bookingWindowDays))
+      .catch(() => {}); // fall back to default 7
+  }, []);
+
+  useEffect(() => {
     if (user) {
       bookingsApi.getMyBookings().then(res => {
         const map: Record<string, { id: string; status: 'confirmed' | 'waitlisted' | 'cancelled' }> = {};
@@ -57,6 +65,16 @@ export function ClassesPage() {
           return b && b.status !== 'cancelled';
         })
       : classes;
+
+  const isWithinBookingWindow = (cls: FitnessClass): boolean => {
+    const msUntilClass = new Date(cls.startTime).getTime() - Date.now();
+    return msUntilClass <= bookingWindowDays * 86400000;
+  };
+
+  const bookingOpensAt = (cls: FitnessClass): Date | undefined => {
+    if (isWithinBookingWindow(cls)) return undefined;
+    return new Date(new Date(cls.startTime).getTime() - bookingWindowDays * 86400000);
+  };
 
   if (isLoading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
@@ -108,16 +126,21 @@ export function ClassesPage() {
               {classView === 'past' ? t.classes.noPastClasses : t.classes.noClasses}
             </p>
           ) : (
-            displayClasses.map(cls => (
-              <ClassCard
-                key={cls.id}
-                fitnessClass={cls}
-                userBookingStatus={classView === 'upcoming' ? userBookings[cls.id]?.status : undefined}
-                onBook={classView === 'upcoming' && user?.role !== 'admin' ? () => handleBook(cls.id) : undefined}
-                onCancel={classView === 'upcoming' && user?.role !== 'admin' ? () => handleCancel(cls.id) : undefined}
-                isBookingLoading={isBookingLoading}
-              />
-            ))
+            displayClasses.map(cls => {
+              const isNonAdminUpcoming = classView === 'upcoming' && !!user && user.role !== 'admin';
+              const withinWindow = isNonAdminUpcoming && isWithinBookingWindow(cls);
+              return (
+                <ClassCard
+                  key={cls.id}
+                  fitnessClass={cls}
+                  userBookingStatus={classView === 'upcoming' ? userBookings[cls.id]?.status : undefined}
+                  onBook={withinWindow ? () => handleBook(cls.id) : undefined}
+                  onCancel={withinWindow ? () => handleCancel(cls.id) : undefined}
+                  bookingOpensAt={isNonAdminUpcoming && !withinWindow ? bookingOpensAt(cls) : undefined}
+                  isBookingLoading={isBookingLoading}
+                />
+              );
+            })
           )}
         </div>
       )}

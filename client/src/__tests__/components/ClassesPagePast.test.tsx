@@ -22,6 +22,12 @@ vi.mock('../../api/bookings', () => ({
   },
 }));
 
+vi.mock('../../api/client', () => ({
+  apiClient: {
+    get: vi.fn().mockResolvedValue({ data: { bookingWindowDays: 7 } }),
+  },
+}));
+
 import { useAuth } from '../../contexts/AuthContext';
 import { useClasses } from '../../hooks/useClasses';
 import { useBooking } from '../../hooks/useBooking';

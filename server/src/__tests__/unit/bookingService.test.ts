@@ -18,6 +18,10 @@ jest.mock('../../services/sesEmailService', () => ({
   sendWaitlistConfirmation: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('../../services/settingsService', () => ({
+  getSetting: jest.fn().mockResolvedValue('7'),
+}));
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 const mockClass = {
@@ -116,6 +120,31 @@ describe('bookingService', () => {
       (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue({ id: 'existing', status: 'confirmed' });
 
       await expect(createBooking('user-1', 'class-1')).rejects.toThrow(ConflictError);
+    });
+
+    it('throws ConflictError when class is beyond booking window', async () => {
+      const { getSetting } = jest.requireMock('../../services/settingsService');
+      getSetting.mockResolvedValueOnce('7');
+      const farFutureClass = { ...mockClass, startTime: new Date(Date.now() + 10 * 86400000) };
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(farFutureClass);
+
+      await expect(createBooking('user-1', 'class-1')).rejects.toThrow(ConflictError);
+    });
+
+    it('allows booking when class is within booking window', async () => {
+      const { getSetting } = jest.requireMock('../../services/settingsService');
+      getSetting.mockResolvedValueOnce('7');
+      // mockClass.startTime is 48h in the future — within 7 days
+      (mockPrisma.class.findUnique as jest.Mock).mockResolvedValue(mockClass);
+      (mockPrisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.booking.count as jest.Mock).mockResolvedValue(0);
+      (mockPrisma.booking.create as jest.Mock).mockResolvedValue({
+        id: 'b-ok', userId: 'user-1', classId: 'class-1', status: 'confirmed',
+        user: mockUser, class: mockClass,
+      });
+
+      const booking = await createBooking('user-1', 'class-1');
+      expect(booking.status).toBe('confirmed');
     });
   });
 

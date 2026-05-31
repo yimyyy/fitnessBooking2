@@ -36,7 +36,8 @@
     "capacity": "Capacité",
     "price": "Prix",
     "spotsLeft": "places restantes",
-    "waitlistPosition": "Position liste d'attente"
+    "waitlistPosition": "Position liste d'attente",
+    "bookingOpens": "Réservation ouvre le"
   },
   "bookings": {
     "myBookings": "Mes Réservations",
@@ -86,7 +87,9 @@
     "addLocation": "Ajouter un emplacement",
     "locationName": "Nom de l'emplacement",
     "locationAdded": "Emplacement ajouté",
-    "deleteLocation": "Supprimer"
+    "deleteLocation": "Supprimer",
+    "bookingWindow": "Fenêtre de réservation (jours)",
+    "bookingWindowHelp": "Les étudiants peuvent réserver les cours à l'avance de ce nombre de jours"
   },
   "form": {
     "title": "Titre",

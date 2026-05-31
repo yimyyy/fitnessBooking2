@@ -10,13 +10,14 @@ interface Props {
   onBook?: () => void;
   onCancel?: () => void;
   isBookingLoading: boolean;
+  bookingOpensAt?: Date;
 }
 
 /**
  * Card component displaying fitness class information.
  * Shows title, instructor, date/time, location, capacity, and booking button.
  */
-export function ClassCard({ fitnessClass, userBookingStatus, onBook, onCancel, isBookingLoading }: Props) {
+export function ClassCard({ fitnessClass, userBookingStatus, onBook, onCancel, isBookingLoading, bookingOpensAt }: Props) {
   const { t } = useLanguage();
   const confirmedCount = fitnessClass._count?.bookings ?? 0;
   const spotsLeft = fitnessClass.capacity - confirmedCount;
@@ -59,24 +60,30 @@ export function ClassCard({ fitnessClass, userBookingStatus, onBook, onCancel, i
         </div>
       </div>
 
-      {(onBook || onCancel) && (
+      {(onBook || onCancel || bookingOpensAt) && (
         <div className="mt-auto pt-2 flex justify-end">
-          <button
-            onClick={hasBooking ? onCancel : onBook}
-            disabled={isBookingLoading || fitnessClass.status === 'cancelled'}
-            className={`px-4 py-2 rounded text-sm font-medium transition disabled:opacity-50 ${
-              hasBooking
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : (fitnessClass.status === 'full' || spotsLeft <= 0)
-                ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isBookingLoading ? '...' :
-             hasBooking ? t.classes.cancel :
-             (fitnessClass.status === 'full' || spotsLeft <= 0) ? t.classes.joinWaitlist :
-             t.classes.book}
-          </button>
+          {bookingOpensAt && !hasBooking ? (
+            <span className="text-xs text-gray-400 italic">
+              {t.classes.bookingOpens} {format(bookingOpensAt, 'PPP')}
+            </span>
+          ) : (
+            <button
+              onClick={hasBooking ? onCancel : onBook}
+              disabled={isBookingLoading || fitnessClass.status === 'cancelled'}
+              className={`px-4 py-2 rounded text-sm font-medium transition disabled:opacity-50 ${
+                hasBooking
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : (fitnessClass.status === 'full' || spotsLeft <= 0)
+                  ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {isBookingLoading ? '...' :
+               hasBooking ? t.classes.cancel :
+               (fitnessClass.status === 'full' || spotsLeft <= 0) ? t.classes.joinWaitlist :
+               t.classes.book}
+            </button>
+          )}
         </div>
       )}
     </div>

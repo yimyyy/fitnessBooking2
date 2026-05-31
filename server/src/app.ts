@@ -8,6 +8,7 @@ import { classesRouter } from './routes/classes.routes';
 import { bookingsRouter } from './routes/bookings.routes';
 import { adminRouter } from './routes/admin.routes';
 import { errorHandler } from './middleware/errorHandler';
+import { getSetting } from './services/settingsService';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
 
@@ -26,6 +27,16 @@ app.use(express.json());
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Public settings (unauthenticated)
+app.get('/api/v1/settings/public', async (_req, res, next) => {
+  try {
+    const bookingWindowDays = parseFloat(await getSetting('bookingWindowDays'));
+    res.json({ bookingWindowDays });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // API routes
